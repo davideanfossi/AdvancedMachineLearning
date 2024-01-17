@@ -94,12 +94,8 @@ class EpicKitchensDataset(data.Dataset, ABC):
         if record.num_frames[modality] < sequence_len:
             sequence_len = record.num_frames[modality]
 
-        logger.info("#### SEQUENCE_LEN:")
-        logger.info(sequence_len)
-        logger.info(record.start_frame)
-        sequence = list(index for index in range(record.start_frame, record.start_frame + sequence_len))
+        sequence = list(index for index in range(1, sequence_len))
         return sequence
-
         #raise NotImplementedError("You should implement _get_val_indices")
 
     def __getitem__(self, index):
