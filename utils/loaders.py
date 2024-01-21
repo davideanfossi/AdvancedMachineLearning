@@ -88,6 +88,7 @@ class EpicKitchensDataset(data.Dataset, ABC):
         # start_frame = 80
         # end_frame = 500
         # indices_list = [80, 81, ..., 160]
+        logger.info(f"Record: {record.untrimmed_video_name}, id: {record.uid}")
 
         sequence_len = self.num_frames_per_clip[modality]
         if record.num_frames[modality] < sequence_len:
