@@ -97,15 +97,9 @@ def save_feat(model, loader, device, it, num_classes):
 
             for m in modalities:
                 batch, _, height, width = data[m].shape
-                logger.info(f"Before Reshape - {m}: {data[m].shape}")
 
                 data[m] = data[m].reshape(batch, args.save.num_clips, args.save.num_frames_per_clip[m], -1, height, width)
                 data[m] = data[m].permute(1, 0, 3, 2, 4, 5)
-                #data[m] = data[m].reshape(batch, args.save.num_clips,
-                #                          args.save.num_frames_per_clip[m], -1, height, width)
-                #data[m] = data[m].permute(1, 0, 3, 2, 4, 5)
-
-                logger.info(f"After Reshape - {m}: {data[m].shape}")
 
                 logits[m] = torch.zeros((args.save.num_clips, batch, num_classes)).to(device)
                 features[m] = torch.zeros((args.save.num_clips, batch, model.task_models[m]
