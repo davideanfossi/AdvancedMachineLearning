@@ -46,7 +46,6 @@ class EpicKitchensDataset(data.Dataset, ABC):
             pickle_name = split + "_test.pkl"
 
         self.list_file = pd.read_pickle(os.path.join(self.dataset_conf.annotations_path, pickle_name))
-        logger.info(self.list_file)
         logger.info(f"Dataloader for {split}-{self.mode} with {len(self.list_file)} samples generated")
         self.video_list = [EpicVideoRecord(tup, self.dataset_conf) for tup in self.list_file.iterrows()]
         self.transform = transform  # pipeline of transforms
@@ -90,7 +89,7 @@ class EpicKitchensDataset(data.Dataset, ABC):
         # end_frame = 500
         # indices_list = [80, 81, ..., 160]
 
-        sequence_len = self.num_frames_per_clip[modality]  * self.num_clips
+        sequence_len = self.num_frames_per_clip[modality]
         if record.num_frames[modality] < sequence_len:
             sequence_len = record.num_frames[modality]
 
