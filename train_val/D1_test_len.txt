@@ -1,2 +1,5 @@
 sum: 85536
 avg: 197
+mediana: 130
+max: 1290
+min: 30
