@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "aml23-ego"
+version = "0.1.0"
+description = "pip manager for AML project"
+authors = ["Nicola Gutierrez <nicolagutierrez.ng@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
