@@ -14,7 +14,7 @@ def extract_infos():
         lens.append(len)
 
     avg = round(sum / avg)
-    mediana = statistics.median(lens)
+    mediana = statistics.median(sorted(lens))
     min_value = min(lens)
     max_value = max(lens)
 
