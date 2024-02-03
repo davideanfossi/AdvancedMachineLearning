@@ -141,7 +141,7 @@ def save_feat(model, loader, device, it, num_classes):
                                                     args.dataset.shift.split("-")[1] + "_" +
                                                     args.split + ".pkl"), 'wb'))
         
-        aggregate_features() # Temporary aggregation of features
+        aggregate_features(args.split) # Temporary aggregation of features
 
         class_accuracies = [(x / y) * 100 for x, y in zip(model.accuracy.correct, model.accuracy.total)]
         logger.info('Final accuracy: top1 = %.2f%%\ttop5 = %.2f%%' % (model.accuracy.avg[1],

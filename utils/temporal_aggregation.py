@@ -33,12 +33,17 @@ class PklDataset(Dataset):
         return uid, video_name, features
 
 
-def aggregate_features():
-    extracted_features_path = "content/saved_features"
+def aggregate_features(mode):
+    extracted_features_path = "/content/aml23-ego/saved_features"
 
     # get list of files in the folder of extracted features (filtering out non .pkl files)
     input_pkl_folder = list(
-        filter(lambda file: file.endswith(".pkl"), os.listdir(extracted_features_path))
+        filter(
+            lambda file: file.endswith(".pkl")
+            and mode in file
+            and not file.startswith("aggregated"),
+            os.listdir(extracted_features_path),
+        )
     )
 
     for file in input_pkl_folder:
