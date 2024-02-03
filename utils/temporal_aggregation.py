@@ -34,7 +34,7 @@ class PklDataset(Dataset):
 
 
 def aggregate_features():
-    extracted_features_path = "saved_features"
+    extracted_features_path = "content/saved_features"
 
     # get list of files in the folder of extracted features (filtering out non .pkl files)
     input_pkl_folder = list(
