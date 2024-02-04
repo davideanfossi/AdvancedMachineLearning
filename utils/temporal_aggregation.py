@@ -40,8 +40,7 @@ def aggregate_features(mode):
     input_pkl_folder = list(
         filter(
             lambda file: file.endswith(".pkl")
-            and mode in file
-            and not file.startswith("aggregated"),
+            and mode in file,
             os.listdir(extracted_features_path),
         )
     )
@@ -74,7 +73,8 @@ def aggregate_features(mode):
         aggregated_features = {"features": temp_features}
 
         try:
-            with open(f"{extracted_features_path}/aggregated_{file}", "wb") as f:
+            os.remove(f"{extracted_features_path}/{file}")
+            with open(f"{extracted_features_path}/{file}", "wb") as f:
                 pickle.dump(aggregated_features, f)
             logger.info("Aggregation: OK")
         except Exception as e:

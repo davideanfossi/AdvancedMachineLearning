@@ -209,7 +209,7 @@ def validate(model, val_loader, device, it, num_classes):
                 logits[m] = torch.zeros((args.test.num_clips, batch, num_classes)).to(device)
 
             clip = {}
-            for i_c in range(args.test.num_clips):
+            for i_c in range(args.test.num_clips): 
                 for m in modalities:
                     clip[m] = data[m][:, i_c].to(device)
 

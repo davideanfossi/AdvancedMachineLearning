@@ -12,7 +12,7 @@ pkl_folder = [
 ]
 
 if __name__ == "__main__":
-    aggregate_features("test")
+    aggregate_features("train")
     """
     extract_pkl(pkl_folder)
 
