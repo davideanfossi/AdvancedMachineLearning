@@ -133,6 +133,7 @@ def train(action_classifier, train_loader, val_loader, device, num_classes):
         # the following code is necessary as we do not reason in epochs so as soon as the dataloader is finished we need
         # to redefine the iterator
         try:
+            # source_data = {'RGB': torch.Tensor(32, 1024)}, source_label = torch.Tensor(32)
             source_data, source_label = next(data_loader_source)
         except StopIteration:
             data_loader_source = iter(train_loader)

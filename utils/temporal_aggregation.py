@@ -68,7 +68,7 @@ def aggregate_features(mode):
 
             # ? cpu() -> move data from GPU to CPU, necessary for numpy conversion
             temp_features.append(
-                {"uid": uid, "features_RGB": (outputs.detach().cpu().numpy())[0]}
+                {"uid": uid, "features_RGB": (outputs.detach().cpu().numpy())}
             )
 
         aggregated_features = {"features": temp_features}
