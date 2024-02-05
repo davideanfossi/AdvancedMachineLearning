@@ -6,7 +6,7 @@ from utils.logger import logger
 
 class TransformerClassifier(nn.Module):
     def __init__(
-        self, num_classes, input_size=1024, num_heads=8, hidden_size=512, num_layers=6
+        self, num_classes, input_size=1024, num_heads=8, hidden_size=1024, num_layers=6
     ):
         super(TransformerClassifier, self).__init__()
 
