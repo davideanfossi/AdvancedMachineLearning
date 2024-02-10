@@ -1,0 +1,1 @@
+ffmpeg -i input_video.mp4 -vf "scale=456:256" -q:v 2 frames/frame_%010d.jpg

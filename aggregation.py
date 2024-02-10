@@ -11,9 +11,15 @@ pkl_folder = [
     "saved_features/aggregated_test_U25",
 ]
 
+pkl_folder_action_net = [
+    "action-net/ActionNet_test",
+    "action-net/ActionNet_train"
+]
+
 if __name__ == "__main__":
-    aggregate_features("train")
+    extract_pkl_pd(pkl_folder_action_net)
     """
+    aggregate_features("train")
     extract_pkl(pkl_folder)
 
     data = np.array((get_data_from_pkl("saved_features/test_D5"))['features'])

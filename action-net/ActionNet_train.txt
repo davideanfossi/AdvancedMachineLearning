@@ -1,0 +1,14 @@
+    index       file                                        description   labels
+40     40  S08_1.pkl                      Spread jelly on a bread slice   Spread
+10     10  S04_1.pkl  Get/replace items from refrigerator/cabinets/d...  Get/Put
+6       6  S03_1.pkl                                Clear cutting board    Clear
+24     24  S08_1.pkl                                Clear cutting board    Clear
+6       6  S04_1.pkl                                   Slice a cucumber    Slice
+..    ...        ...                                                ...      ...
+49     49  S05_2.pkl                          Clean a pan with a sponge    Clean
+56     56  S09_2.pkl                        Clean a plate with a sponge    Clean
+3       3  S03_2.pkl              Spread almond butter on a bread slice   Spread
+6       6  S02_2.pkl                                   Slice a cucumber    Slice
+24     24  S09_2.pkl                                Clear cutting board    Clear
+
+[527 rows x 4 columns]
