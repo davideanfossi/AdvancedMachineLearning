@@ -42,6 +42,14 @@ def extract_pkl(pkl_folder):
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
+def get_data_from_pkl_pd(pkl_file):
+    # Open the .pkl file in binary mode for reading
+    with open(f"{pkl_file}.pkl", "rb") as pkl_file:
+        # Load the data from the .pkl file
+        data = pd.read_pickle(pkl_file)
+
+    return data
+
 def extract_pkl_pd(pkl_folder):
     try:
         for i in range(len(pkl_folder)):
@@ -51,7 +59,7 @@ def extract_pkl_pd(pkl_folder):
                 data = pd.read_pickle(pkl_file)
 
             # Open the .txt file in text mode for writing
-            with open(f"{pkl_folder[i]}.txt", "w") as txt_file:
+            with open(f"{pkl_folder[i]}.csv", "w") as txt_file:
                 # Write the extracted data to the .txt file
                 txt_file.write(str(data))
 

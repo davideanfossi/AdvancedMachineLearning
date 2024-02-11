@@ -18,12 +18,8 @@ pkl_folder_action_net = ["action-net/ActionNet_test", "action-net/ActionNet_trai
 hdf5_filepath = "../data/action_net/EMG/ActionNet Wearables S04.hdf5"
 hdf5_out_folder = "../data/action_net/EMG/view"
 
-if __name__ == "__main__":
-    # FEATURE EXTRACTION
-    # aggregate_features("train")
-    # extract_pkl(pkl_folder)
 
-    # HDF5 handler
+def hdf5_handler():
     keys = [
         "in_path",
         "out_folder",
@@ -38,14 +34,29 @@ if __name__ == "__main__":
     }
 
     # ? Passing parameters with this setup:
-    # python tester.py <save> <in_path> <out_folder> <mode> <device> <stream>
+    # python tester.py <in_path> <out_folder> <mode> <device> <stream>
 
     # ? offset used to avoid passing all parameters
-    offset = 1 + len(params)
+    offset = len(params)
 
     if len(sys.argv) > 1:
-        for i in range(offset, len(sys.argv)):
-            params[keys[i - offset + 1]] = sys.argv[i]
+        for i in range(1, len(sys.argv)):
+            params[keys[i - 1 + offset]] = sys.argv[i]
 
     hdf5_extractor = HDF5Extractor(*params.values())
-    hdf5_extractor.extract_hdf5(save=False)
+    hdf5_extractor.extract_hdf5(save=False, label_index=1)
+
+
+if __name__ == "__main__":
+    # FEATURE EXTRACTION (Step #2)
+    # aggregate_features("train")
+    # extract_pkl(pkl_folder)
+
+    # DATA EXTRACTION (Step #3)
+    #data = get_data_from_pkl_pd("train_val_an/S04_1")
+    #all_columns = data.columns.tolist()
+    #row = data.iloc[1]
+    #print(row)
+
+    # HDF5 handler (Step #3)
+    hdf5_handler()
