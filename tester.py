@@ -1,8 +1,10 @@
 import numpy as np
+import pandas as pd
 import sys
 from utils.temporal_aggregation import aggregate_features
 from utils.extract_pkl import *
 from utils.extract_hdf5 import *
+from utils.rgb_dataset import *
 
 pkl_folder = [
     "saved_features/aggregated_test_D5",
@@ -53,10 +55,17 @@ if __name__ == "__main__":
     # extract_pkl(pkl_folder)
 
     # DATA EXTRACTION (Step #3)
-    #data = get_data_from_pkl_pd("train_val_an/S04_1")
-    #all_columns = data.columns.tolist()
-    #row = data.iloc[1]
-    #print(row)
+    # data = get_data_from_pkl_pd("train_val_an/S04_1")
+    # all_columns = data.columns.tolist()
+    # row = data.iloc[-1]
+    # value = row['start']
+    # print(row)
+    # print(value)
+
+    # RGB Action Net Creation
+    rgb_action_net_creation("train_val_an/D1_train")
+    data = get_data_from_pkl_pd("train_val_an/D1_train")
+    print(data)
 
     # HDF5 handler (Step #3)
-    hdf5_handler()
+    # hdf5_handler()
