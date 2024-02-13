@@ -247,3 +247,27 @@ class EpicKitchensDataset(data.Dataset, ABC):
 
     def __len__(self):
         return len(self.video_list)
+
+
+class ActionEMGDataset(data.Dataset, ABC):
+    def __init__(self, split, mode, dataset_conf, additional_info=False):
+        self.mode = mode  # 'train', 'val' or 'test'
+        self.dataset_conf = dataset_conf
+        self.stride = self.dataset_conf.stride
+        self.additional_info = additional_info
+
+        if self.mode == "train":
+            pickle_name = split + "_train.pkl"
+        else:
+            pickle_name = split + "_test.pkl"
+
+        self.list_file = pd.read_pickle(os.path.join(self.dataset_conf.annotations_path, pickle_name))
+        self.video_list = [EpicVideoRecord(tup, self.dataset_conf) for tup in self.list_file.iterrows()]
+
+    def __getitem__(self, index):
+        # record is a row of the pkl file containing one sample/action
+        # notice that it is already converted into a EpicVideoRecord object so that here you can access
+        # all the properties of the sample easily
+        record = self.video_list[index]
+
+        return record.label, record.myo_left_readings, record.myo_right_readings, record.id

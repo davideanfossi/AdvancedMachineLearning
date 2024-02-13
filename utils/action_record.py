@@ -12,15 +12,15 @@ class ActionEMGRecord(object):
 
     @property
     def myo_right_readings(self):
-        return self._series['myo_right_readings']
+        return self._series['right_readings']
 
     @property
     def myo_left_readings(self):
-        return self._series['myo_left_readings']
+        return self._series['left_readings']
 
 
     @property
     def label(self):
-        if 'verb' not in self._series.keys().tolist():
+        if 'label' not in self._series.keys().tolist():
             raise NotImplementedError
-        return self._series['verb']
+        return self._series['label']
