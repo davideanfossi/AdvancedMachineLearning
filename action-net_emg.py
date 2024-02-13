@@ -13,6 +13,7 @@ import os
 import models as model_list
 import tasks
 import wandb
+from torchvision import transforms
 
 # global variables among training functions
 training_iterations = 0
@@ -40,26 +41,25 @@ def init_operations():
 
 def main():
 
-    train_loader = torch.utils.data.DataLoader(ActionEMGDataset(args.dataset.shift.split("-")[0],
-                                                                    'train', args.dataset),
-                                                batch_size=1, shuffle=False,
-                                                num_workers=args.dataset.workers, pin_memory=True, drop_last=True)
+    train_loader = torch.utils.data.DataLoader(
+            ActionEMGDataset(args.dataset.shift.split("-")[0], 'train', args.dataset),
+            batch_size=1, shuffle=False, num_workers=args.dataset.workers,
+            pin_memory=True, drop_last=True
+        )
     
-    data_loader_source = iter(train_loader) #* analogo all'enumerate, chiama _get_item che chiama _get_train_indices
-    for i in range(1, 20): #da modificare
-        try:
-        # source_data = {'RGB': torch.Tensor(32, 1024)}, source_label = torch.Tensor(32)
-            print(next(data_loader_source))
-        except StopIteration:
-            return
-        #source_data, source_label = next(data_loader_source)
+    # data_loader_source = iter(train_loader) #* analogo all'enumerate, chiama _get_item che chiama _get_train_indices
+    # for i in range(1, 20): #da modificare
+    #     try:
+    #         print(next(data_loader_source)[0][1])
+    #         exit()
+    #     except StopIteration:
+    #         return
+
+    for i_val, (label, left_reading, right_reading, id) in enumerate(train_loader):
+        print(left_reading.size(), right_reading.size())
+        exit()
+
     
-
-    # for i_val, (left, label) in enumerate(train_loader):
-    #     print(left, label, len(label))
-        # exit()
-
-    return 1
     #! PER DAVIDE ED EMILIO
     # left:[[1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1], ...] - right:[[1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1], ...]
     # 1) i valori negativi diventano positivi

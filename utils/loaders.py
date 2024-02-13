@@ -268,14 +268,30 @@ class ActionEMGDataset(data.Dataset, ABC):
         #print(f"mode: {self.mode}, len: {len(self.emg_list)}, [0]: {self.emg_list[0].label}")
         #exit()
 
+    def _preprocess(self, reading):
+        #* apply preprocessing to the EMG data
+        # abs value
+        x = np.abs(reading)
+        #! low pass filter here
+        # normalize the readings between -1 and 1 on the second axis
+        reading = (x - np.min(x, axis=1)[:, None]) / (np.max(x, axis=1) - np.min(x, axis=1))[:, None] * 2 - 1
+        # abs value
+        reading = np.abs(reading)
+        # sum the readings of the 8 channels
+        reading = np.sum(reading, axis=1)
+
+        return reading
+
     def __getitem__(self, index):
         # record is a row of the pkl file containing one sample/action
         # notice that it is already converted into a EpicVideoRecord object so that here you can access
         # all the properties of the sample easily
         record = self.emg_list[index]
 
-        return record.label, record.myo_left_readings, record.myo_right_readings, record.id
-        # return record.label, record.myo_left_readings, record.myo_right_readings, record.id
+        left_reading = self._preprocess(record.myo_left_readings)
+        right_reading = self._preprocess(record.myo_right_readings)
+
+        return record.label, left_reading, right_reading, record.id
     
     def __len__(self):
         return len(self.emg_list)
