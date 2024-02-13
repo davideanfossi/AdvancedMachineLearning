@@ -274,7 +274,7 @@ class ActionEMGDataset(data.Dataset, ABC):
         # all the properties of the sample easily
         record = self.emg_list[index]
 
-        return record.myo_left_readings[:200], record.label
+        return record.label, record.myo_left_readings, record.myo_right_readings, record.id
         # return record.label, record.myo_left_readings, record.myo_right_readings, record.id
     
     def __len__(self):
