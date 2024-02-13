@@ -50,22 +50,31 @@ def hdf5_handler():
 
 
 if __name__ == "__main__":
+    pd.set_option('display.float_format', lambda x: f'{x:.4f}')
+
     # FEATURE EXTRACTION (Step #2)
     # aggregate_features("train")
     # extract_pkl(pkl_folder)
 
     # DATA EXTRACTION (Step #3)
-    # data = get_data_from_pkl_pd("train_val_an/S04_1")
-    # all_columns = data.columns.tolist()
-    # row = data.iloc[-1]
+    #data = get_data_from_pkl_pd("action-net/S04_1")
+    #data = get_data_from_pkl_pd("action-net/ActionNet_train")
+    #all_columns = data.columns.tolist()
+    #print(all_columns)
+    #row = data['description']
     # value = row['start']
-    # print(row)
-    # print(value)
+    #print(set(row))
+    #for i in range(60):
+        #if len(data['myo_right_timestamps'][i]) != len(data['myo_left_timestamps'][i]):
+            #print(len(data['myo_right_timestamps'][i])-len(data['myo_left_timestamps'][i]))
+    #print(data[['myo_right_timestamps', 'myo_left_timestamps']])
 
     # RGB Action Net Creation
-    rgb_action_net_creation("train_val_an/D1_train")
-    data = get_data_from_pkl_pd("train_val_an/D1_train")
-    print(data)
+    rgb_action_net_creation("train_val_action_net/D1")
+    #data = get_data_from_pkl_pd("train_val_action_net/D1_train")
+    #print(set(data["description"]))
+    #print(data)
+    #print(data[["video_id", "verb", "start_timestamp", "stop_timestamp", "start_frame", "stop_frame"]][:30])
 
     # HDF5 handler (Step #3)
     # hdf5_handler()
