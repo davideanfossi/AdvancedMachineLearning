@@ -57,7 +57,8 @@ if __name__ == "__main__":
     # extract_pkl(pkl_folder)
 
     # DATA EXTRACTION (Step #3)
-    #data = get_data_from_pkl_pd("action-net/S04_1")
+    data = get_data_from_pkl_pd("action-net/S04_1")
+    print(data[["description", "start", "stop"]])
     #data = get_data_from_pkl_pd("action-net/ActionNet_train")
     #all_columns = data.columns.tolist()
     #print(all_columns)
@@ -70,11 +71,11 @@ if __name__ == "__main__":
     #print(data[['myo_right_timestamps', 'myo_left_timestamps']])
 
     # RGB Action Net Creation
-    rgb_action_net_creation("train_val_action_net/D1")
-    #data = get_data_from_pkl_pd("train_val_action_net/D1_train")
+    df = rgb_action_net_creation("train_val_action_net/D1")
+    data = get_data_from_pkl_pd("train_val_action_net/D1_train")
     #print(set(data["description"]))
     #print(data)
-    #print(data[["video_id", "verb", "start_timestamp", "stop_timestamp", "start_frame", "stop_frame"]][:30])
+    print(df[["video_id", "verb", "start_timestamp", "stop_timestamp", "start_frame", "stop_frame"]])
 
     # HDF5 handler (Step #3)
     # hdf5_handler()
