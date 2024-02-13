@@ -49,6 +49,12 @@ def main():
         print(left, label, len(label))
         exit()
 
+    #! PER DAVIDE ED EMILIO
+    # left:[[1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1], ...] - right:[[1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1], ...]
+    # 1) i valori negativi diventano positivi
+    # 2) filtro passa-basso
+    # 3) normalizzazione tra [-1, 1] max e min dentro gli 8 canali
+
 
 
 def train(action_classifier, train_loader, val_loader, device, num_classes):
