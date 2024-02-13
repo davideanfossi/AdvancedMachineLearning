@@ -2,6 +2,7 @@ import glob
 from abc import ABC
 import pandas as pd
 from .epic_record import EpicVideoRecord
+from .action_record import ActionEMGRecord
 import torch.utils.data as data
 from PIL import Image
 import os
@@ -257,17 +258,24 @@ class ActionEMGDataset(data.Dataset, ABC):
         self.additional_info = additional_info
 
         if self.mode == "train":
-            pickle_name = split + "_train.pkl"
+            pickle_name = "big_file" + "_train.pkl"
         else:
-            pickle_name = split + "_test.pkl"
+            pickle_name = "big_file" + "_test.pkl"
 
         self.list_file = pd.read_pickle(os.path.join(self.dataset_conf.annotations_path, pickle_name))
-        self.video_list = [EpicVideoRecord(tup, self.dataset_conf) for tup in self.list_file.iterrows()]
+        #print(f"list-file: {self.list_file}")
+        self.emg_list = [ActionEMGRecord(tup, self.dataset_conf) for tup in self.list_file["features"]]
+        #print(f"mode: {self.mode}, len: {len(self.emg_list)}, [0]: {self.emg_list[0].label}")
+        #exit()
 
     def __getitem__(self, index):
         # record is a row of the pkl file containing one sample/action
         # notice that it is already converted into a EpicVideoRecord object so that here you can access
         # all the properties of the sample easily
-        record = self.video_list[index]
+        record = self.emg_list[index]
 
-        return record.label, record.myo_left_readings, record.myo_right_readings, record.id
+        return record.myo_left_readings[:200], record.label
+        # return record.label, record.myo_left_readings, record.myo_right_readings, record.id
+    
+    def __len__(self):
+        return len(self.emg_list)

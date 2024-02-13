@@ -4,7 +4,7 @@ from utils.logger import logger
 import torch.nn.parallel
 import torch.optim
 import torch
-from utils.loaders import ActionEMGRecord
+from utils.loaders import ActionEMGDataset
 from utils.args import args
 from utils.utils import pformat_dict
 import utils
@@ -40,13 +40,14 @@ def init_operations():
 
 def main():
 
-    train_loader = torch.utils.data.DataLoader(ActionEMGRecord(args.dataset.shift.split("-")[0],
+    train_loader = torch.utils.data.DataLoader(ActionEMGDataset(args.dataset.shift.split("-")[0],
                                                                     'train', args.dataset),
-                                                batch_size=args.batch_size, shuffle=True,
+                                                batch_size=1, shuffle=True,
                                                 num_workers=args.dataset.workers, pin_memory=True, drop_last=True)
     
-    for i_val, (label, left, right, id) in enumerate(train_loader):
-        print(label, left, right, id)
+    for i_val, (left, label) in enumerate(train_loader):
+        print(left, label, len(label))
+        exit()
 
 
 

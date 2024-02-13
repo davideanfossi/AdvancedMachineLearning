@@ -3,8 +3,9 @@
 class ActionEMGRecord(object):
     def __init__(self, tup, dataset_conf):
         #self._index = str(tup[0])
-        self._series = tup[1]       #forse vuole tup[0]
+        self._series = tup       #forse vuole tup[0]
         self.dataset_conf = dataset_conf
+        #print(self._series)
 
     @property
     def id(self):
@@ -21,6 +22,6 @@ class ActionEMGRecord(object):
 
     @property
     def label(self):
-        if 'label' not in self._series.keys().tolist():
-            raise NotImplementedError
+        # if 'label' not in self._series.keys().tolist():
+        #     raise NotImplementedError
         return self._series['label']

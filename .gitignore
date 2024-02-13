@@ -7,3 +7,6 @@ Experiment_logs
 saved_models
 TEST_RESULTS
 
+train_val/big_file_test.pkl
+train_val/big_file_train.pkl
+
