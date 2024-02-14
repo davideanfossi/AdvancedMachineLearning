@@ -71,8 +71,8 @@ if __name__ == "__main__":
     #print(data[['myo_right_timestamps', 'myo_left_timestamps']])
 
     # RGB Action Net Creation
-    df = rgb_action_net_creation("train_val_action_net/D1")
-    data = get_data_from_pkl_pd("train_val_action_net/D1_train")
+    df = rgb_action_net_creation("train_val/D4")
+    data = get_data_from_pkl_pd("train_val/D4_train")
     #print(set(data["description"]))
     #print(data)
     print(df[["video_id", "verb", "start_timestamp", "stop_timestamp", "start_frame", "stop_frame"]])
