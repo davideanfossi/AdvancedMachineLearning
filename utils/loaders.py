@@ -313,7 +313,9 @@ class ActionEMGDataset(data.Dataset, ABC):
         left_readings = self._preprocess(record.myo_left_readings)
         right_readings = self._preprocess(record.myo_right_readings)
 
-        return record.label, right_readings
+        sample = {"left": left_readings, "right": right_readings}
+
+        return sample, record.label
     
     def __len__(self):
         return len(self.emg_list)
