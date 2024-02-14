@@ -48,7 +48,7 @@ def main():
         )
     
     data_loader_source = iter(train_loader) #* analogo all'enumerate, chiama _get_item che chiama _get_train_indices
-    for i in range(1, 20): #da modificare
+    for i in range(0, args.train.num_iter): #da modificare
         try:
             print(next(data_loader_source))
             exit()
