@@ -17,17 +17,17 @@ train:
   dense_sampling: # sampling version adopted in training for each modality
     RGB: True
   num_frames_per_clip: # number of frames adopted in training for each modality
-    RGB: 25
+    RGB: 10
 
 test:
   num_clips: 5 # number of clips in testing
   dense_sampling: # sampling version adopted in test for each modality
     RGB: True
   num_frames_per_clip: # number of frames adopted in test for each modality
-    RGB: 25
+    RGB: 10
 
 dataset:
-  annotations_path: train_val_action_net # path for the annotations data
+  annotations_path: train_val # path for the annotations data
   shift: ??? # shifts of the dataset
   workers: 4 # number of workers for the dataloader
   stride: 2 # stride in case of dense sampling
@@ -36,7 +36,7 @@ dataset:
   RGB:
     data_path: ??? # path to RGB data
     tmpl: "img_{:010d}.jpg" # format of RGB filenames
-    features_name: D1
+    features_name: feature_extracted
   Event: # not neeeded for the project
     rgb4e: 6
 
