@@ -47,17 +47,17 @@ def main():
             pin_memory=True, drop_last=True
         )
     
-    # data_loader_source = iter(train_loader) #* analogo all'enumerate, chiama _get_item che chiama _get_train_indices
-    # for i in range(1, 20): #da modificare
-    #     try:
-    #         print(next(data_loader_source)[0][1])
-    #         exit()
-    #     except StopIteration:
-    #         return
+    data_loader_source = iter(train_loader) #* analogo all'enumerate, chiama _get_item che chiama _get_train_indices
+    for i in range(1, 20): #da modificare
+        try:
+            print(next(data_loader_source))
+            exit()
+        except StopIteration:
+            return
 
-    for i_val, (label, left_reading, right_reading, id) in enumerate(train_loader):
-        print(left_reading.size(), right_reading.size())
-        exit()
+    # for i_val, (label, left_reading, right_reading, id) in enumerate(train_loader):
+    #     print(id, left_reading, right_reading)
+    #     exit()
 
     
     #! PER DAVIDE ED EMILIO

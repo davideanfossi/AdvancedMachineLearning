@@ -9,6 +9,7 @@ import os
 import os.path
 from utils.logger import logger
 import numpy as np
+from scipy.signal import butter, lfilter, filtfilt
 
 class EpicKitchensDataset(data.Dataset, ABC):
     def __init__(self, split, modalities, mode, dataset_conf, num_frames_per_clip, num_clips, dense_sampling,
@@ -268,19 +269,40 @@ class ActionEMGDataset(data.Dataset, ABC):
         #print(f"mode: {self.mode}, len: {len(self.emg_list)}, [0]: {self.emg_list[0].label}")
         #exit()
 
-    def _preprocess(self, reading):
+    def _preprocess(self, readings):
         #* apply preprocessing to the EMG data
-        # abs value
-        x = np.abs(reading)
-        #! low pass filter here
-        # normalize the readings between -1 and 1 on the second axis
-        reading = (x - np.min(x, axis=1)[:, None]) / (np.max(x, axis=1) - np.min(x, axis=1))[:, None] * 2 - 1
-        # abs value
-        reading = np.abs(reading)
-        # sum the readings of the 8 channels
-        reading = np.sum(reading, axis=1)
 
-        return reading
+        #* Rectification
+        # abs value
+        readings_rectified = np.abs(readings)
+
+        #* low-pass Filter
+        # Frequenza di campionamento (Hz)
+        fs = 100  # Assumo 100 Hz -> una reading ogni 0,01s
+        f_cutoff = 5  # Frequenza di taglio
+
+        # Frequenza di taglio normalizzata
+        f_cutoff_norm = f_cutoff / (0.5 * fs)
+        # Ordine del filtro
+        order = 4 
+        # Calcolo coefficienti del filtro
+        b, a = butter(order, f_cutoff_norm, btype='low', analog=False)
+        # Concateno tutti i vettori in un'unica matrice
+        matrice_vettori = np.array(readings_rectified)
+        # Applicazione filtro
+        readings_filtered = lfilter(b, a, matrice_vettori.T, axis=0).T
+
+        #* Normalization
+        # normalize the readings between -1 and 1 on the second axis
+        readings_normalized = (readings_filtered - np.min(readings_filtered, axis=1)[:, None]) / (np.max(readings_rectified, axis=1) - np.min(readings_rectified, axis=1))[:, None] * 2 - 1
+        # abs value
+        readings_normalized = np.abs(readings_normalized)
+
+        #* Overall forearm activation Estimation
+        # sum the readings of the 8 channels
+        wrist_stiffnes = np.sum(readings_normalized, axis=1)
+
+        return wrist_stiffnes
 
     def __getitem__(self, index):
         # record is a row of the pkl file containing one sample/action
@@ -288,10 +310,10 @@ class ActionEMGDataset(data.Dataset, ABC):
         # all the properties of the sample easily
         record = self.emg_list[index]
 
-        left_reading = self._preprocess(record.myo_left_readings)
-        right_reading = self._preprocess(record.myo_right_readings)
+        left_readings = self._preprocess(record.myo_left_readings)
+        right_readings = self._preprocess(record.myo_right_readings)
 
-        return record.label, left_reading, right_reading, record.id
+        return record.label, right_readings
     
     def __len__(self):
         return len(self.emg_list)
