@@ -26,7 +26,7 @@ record["verb_class"] = list(labels).index(
     (row["description"].split()[0]).split("/")[0]
 )"""
 
-fps = 22
+fps = 30
 offset = 5  # seconds
 labels = [
     "Spread jelly on a bread slice",

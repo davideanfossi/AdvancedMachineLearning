@@ -1,7 +1,7 @@
 action: save # train or test
 name: saved_feat_I3D
 split: train
-resume_from: /content/saved_models/
+resume_from: /Users/klaus/Developer/University/AML_project/data/saved_models/I3D_SourceOnlyD1
 
 save:
   num_clips: 5
@@ -11,7 +11,7 @@ save:
     RGB: 16
 
 dataset:
-  annotations_path: train_val
+  annotations_path: train_val_action_net
   shift: ???
   workers: 2 #4
   stride: 2
@@ -36,4 +36,5 @@ models:
     sgd_momentum: 0.9
     weight_decay: 1e-7
     weight_i3d_rgb: './pretrained_i3d/rgb_imagenet.pt'
+
 
