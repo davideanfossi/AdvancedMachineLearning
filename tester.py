@@ -71,11 +71,12 @@ if __name__ == "__main__":
     #print(data[['myo_right_timestamps', 'myo_left_timestamps']])
 
     # RGB Action Net Creation
-    df = rgb_action_net_creation("train_val/D4")
-    data = get_data_from_pkl_pd("train_val/D4_train")
+    df, _ = rgb_action_net_creation("train_val_action_net/D4", "train_val/D4")
+    data = get_data_from_pkl_pd("train_val/D3_train")
     #print(set(data["description"]))
-    #print(data)
+    print(len(set(data["verb"])))
     print(df[["video_id", "verb", "start_timestamp", "stop_timestamp", "start_frame", "stop_frame"]])
+    print(len(set(df["uid"])))
 
     # HDF5 handler (Step #3)
     # hdf5_handler()
