@@ -28,5 +28,5 @@ dataset:
     rgb4e: 6
 
 # these are the action recognition models for each modality
-model: LSTM_emg
+model: ActionNetwork
   

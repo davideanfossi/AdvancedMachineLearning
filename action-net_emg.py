@@ -51,7 +51,7 @@ def main():
             pin_memory=True, drop_last=True
         )
     
-    input_size = train_loader.dataset.max_length
+    input_size = 16
     model = getattr(model_list, args.model)(num_classes, input_size, 1) #ToDO: must be edited
     # model.load_on_gpu(device)
     

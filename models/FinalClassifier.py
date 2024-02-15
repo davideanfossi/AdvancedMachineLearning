@@ -75,34 +75,44 @@ class TransformerClassifier(nn.Module):
 
         return logits, {"features": feat}
     
-class LSTM_emg(nn.Module):
+class ActionNetwork(nn.Module):
     def __init__(self, num_classes, input_size=16, batch_size=1): #* aggiusta i parametri, ad es. passa la batch come arg
-        super(LSTM_emg, self).__init__()
+        super(ActionNetwork, self).__init__()
         self.input_size = input_size
         self.hidden_size = 5
-        self.num_layers = 2
+        self.num_layers = 1
         self.batch_size = batch_size
         self.lstm = nn.LSTM(self.input_size, self.hidden_size, self.num_layers, 
-                            bias=True, batch_first=True, dropout=0.5, bidirectional=False, 
+                            bias=True, batch_first=True, dropout=0, bidirectional=False, 
                             proj_size=0, device=None, dtype=None)
-        self.fc = nn.Linear(self.hidden_size, num_classes)
+        self.lstm2 = nn.LSTM(5, 50, self.num_layers, 
+                            bias=True, batch_first=True, dropout=0.2, bidirectional=False, 
+                            proj_size=0, device=None, dtype=None)
+        # self.fc2 = nn.Linear(50, 50)
+        # self.fc = nn.Linear(self.hidden_size, num_classes)
         # print(f"2)  {input_size}")
 
     def forward(self, x):
         #* x.shape = (1, 100, 16)
         # x = torch.tensor(x, dtype=torch.int32)
 
-        print(f"IIIII: {x}, {x.shape}")
+        # print(f"IIIII: {x}, {x.shape}")
 
         h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
         c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
 
         out, _ = self.lstm(x, (h0, c0)) #? Lui vuole 100x5 come output
 
+        h02 = torch.zeros(self.num_layers, out.size(0), 50).to(x.device)
+        c02 = torch.zeros(self.num_layers, out.size(0), 50).to(x.device)
+
+        # out2, _ = self.lstm2(out, (h02, c02))
+
         # Ridimensiona l'output per adattarlo al layer fully connected
-        feat = out[:, -1, :]  # Prendi solo l'output dell'ultimo timestep
-        logits = self.fc(feat)  # Passa l'output attraverso il layer fully connected
+        # feat = out[:, -1, :]  # Prendi solo l'output dell'ultimo timestep
+        logits = self.fc(out)  # Passa l'output attraverso il layer fully connected
 
-        print(logits.shape)
+        # print(logits.shape, out.shape, out2.shape)
 
-        return logits, {"features": feat}
+        return logits, {"features": out}    #* (1, 100, 20) - (1, 100, 5)
+        #* logits contiene gli score relativi alle 20 label
