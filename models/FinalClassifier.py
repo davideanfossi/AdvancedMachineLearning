@@ -76,40 +76,33 @@ class TransformerClassifier(nn.Module):
         return logits, {"features": feat}
     
 class LSTM_emg(nn.Module):
-    def __init__(self, num_classes, input_size, batch_size): #* aggiusta i parametri, ad es. passa la batch come arg
+    def __init__(self, num_classes, input_size=16, batch_size=1): #* aggiusta i parametri, ad es. passa la batch come arg
         super(LSTM_emg, self).__init__()
         self.input_size = input_size
-        self.hidden_size = 512
+        self.hidden_size = 5
         self.num_layers = 2
         self.batch_size = batch_size
         self.lstm = nn.LSTM(self.input_size, self.hidden_size, self.num_layers, 
                             bias=True, batch_first=True, dropout=0.5, bidirectional=False, 
                             proj_size=0, device=None, dtype=None)
         self.fc = nn.Linear(self.hidden_size, num_classes)
-        print(f"2)  {input_size}")
+        # print(f"2)  {input_size}")
 
     def forward(self, x):
-        #* x = {"left": [...], "right": [...]} inizialmente
-        #* x = [....] x.shape = (1, input_size)    ora
+        #* x.shape = (1, 100, 16)
+        # x = torch.tensor(x, dtype=torch.int32)
+
+        print(f"IIIII: {x}, {x.shape}")
 
         h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
         c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
 
-        x = x.unsqueeze(1) # Vogliamo (1, 1, input_size)
-
-        print(x.shape)
-
         out, _ = self.lstm(x, (h0, c0)) #? Lui vuole 100x5 come output
 
         # Ridimensiona l'output per adattarlo al layer fully connected
-        feat = out.view(-1, self.hidden_size)  # Ridimensiona l'output in una dimensione lineare
-        # Prendi solo l'output dell'ultimo timestep
-        out_last = out[:, -1, :]  
-        
-        print(feat.shape, out.shape, out_last.shape)
-        logits = self.fc(out_last)  # Passa l'output attraverso il layer fully connected
+        feat = out[:, -1, :]  # Prendi solo l'output dell'ultimo timestep
+        logits = self.fc(feat)  # Passa l'output attraverso il layer fully connected
 
-        #! Ridimensiona l'output al formato richiesto (100x5)
-        feat = out_last.view(100, 5)
+        print(logits.shape)
 
         return logits, {"features": feat}

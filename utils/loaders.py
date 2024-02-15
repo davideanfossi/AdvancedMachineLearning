@@ -271,30 +271,30 @@ class ActionEMGDataset(data.Dataset, ABC):
         self.list_file = pd.read_pickle(os.path.join(self.dataset_conf.annotations_path, pickle_name))
         #print(f"list-file: {self.list_file}")
         self.emg_list = [ActionEMGRecord(tup, self.dataset_conf) for tup in self.list_file["features"]]
+        self.formatted_emg_list = []
+
+        id = 0
         for emg_record in self.emg_list:
-            self.max_length_left = max(self.max_length_left, len(emg_record.myo_left_readings))
-            self.max_length_right = max(self.max_length_right, len(emg_record.myo_right_readings))
-            self.max_length = self.max_length_left + self.max_length_right
-
-        # for i in range (0, len(self.emg_list)):
-        #     max_length_left = max(len(self.emg_list[i].myo_left_readings), len(self.emg_list[i].myo_right_readings))
-        #     #print(len(self.emg_list[i].myo_left_readings), len(self.emg_list[i].myo_right_readings), rel_max_length)
-        #     if(rel_max_length>self.abs_max_lenght):
-        #         self.abs_max_lenght = rel_max_length
-
-        # print(f"abs: {self.abs_max_lenght}")
-            # print(self.emg_list[0])
-            # print(f"##) left: {len(self.emg_list[i].myo_left_readings)} - right: {len(self.emg_list[i].myo_rigth_readings)} - rel_max: {max(len(self.emg_list[0].myo_left_readings), len(self.emg_list[0].myo_right_readings))}")
-        #print(f"mode: {self.mode}, len: {len(self.emg_list)}, [0]: {self.emg_list[0].label}")
-        #exit()
+            # controllo qual è la lunghezza minore tra left e right
+            common_length = min(len(emg_record.myo_left_readings), len(emg_record.myo_right_readings))
+            N = common_length//100
+            if(N>0):
+                for i in range (0, N):
+                    id+=1
+                    left = self._preprocess(emg_record.myo_left_readings[100*i:100*(i+1)])
+                    right = self._preprocess(emg_record.myo_right_readings[100*i:100*(i+1)])
+                    sample = np.concatenate((left, right), axis=1)
+                    self.formatted_emg_list.append({"id": id, "sample": sample, "label": emg_record.label})
 
     def _preprocess(self, readings):
         #* apply preprocessing to the EMG data
 
+
+        # print(readings, readings.shape)
         #* Rectification
         # abs value
         readings_rectified = np.abs(readings)
-
+        # print(readings_rectified, readings_rectified.shape)
         #* low-pass Filter
         # Frequenza di campionamento (Hz)
         fs = 160  # Frequenza dei sampling data da loro
@@ -310,43 +310,34 @@ class ActionEMGDataset(data.Dataset, ABC):
         matrice_vettori = np.array(readings_rectified)
         # Applicazione filtro
         readings_filtered = lfilter(b, a, matrice_vettori.T, axis=0).T
+        
+        try:
+            # Trova il valore massimo e minimo globale tra tutti i vettori
+            global_max = np.max(readings_filtered)
+            global_min = np.min(readings_filtered)
 
-        #* Normalization
-        # normalize the readings between -1 and 1 on the second axis
-        readings_normalized = (readings_filtered - np.min(readings_filtered, axis=1)[:, None]) / (np.max(readings_rectified, axis=1) - np.min(readings_rectified, axis=1))[:, None] * 2 - 1
-        # abs value
-        readings_normalized = np.abs(readings_normalized)
+            # Normalizza tutti i vettori in readings_filtered
+            readings_normalized = 2 * (readings_filtered - global_min) / (global_max - global_min) - 1
 
-        #! concatena 8 e 8 per avere i 16
-
-        #* Overall forearm activation Estimation
-        # sum the readings of the 8 channels
-        wrist_stiffnes = np.sum(readings_normalized, axis=1)
-
-        return wrist_stiffnes
+        except:   
+            print(f"🙀")
+        # print(readings_normalized, readings_normalized.shape)
+        # exit()
+        return readings_normalized
 
     def __getitem__(self, index):
         # record is a row of the pkl file containing one sample/action
         # notice that it is already converted into a EpicVideoRecord object so that here you can access
         # all the properties of the sample easily
-        record = self.emg_list[index]
+        record = self.formatted_emg_list[index]
 
-        left_readings = self._preprocess(record.myo_left_readings)
-        right_readings = self._preprocess(record.myo_right_readings)
+        sample = torch.tensor(record["sample"], dtype=torch.float32)
+        # sample = sample.float(32)
+        label = record["label"]
 
-        padding_left = max(0, self.max_length_left - len(left_readings))
-        padding_right = max(0, self.max_length_right - len(right_readings))
+        # print(sample.shape, label)
 
-        padded_left_tensor = F.pad(torch.tensor(left_readings), (0, padding_left), value = 0)   #aggiungo padd a sx
-        padded_right_tensor = F.pad(torch.tensor(right_readings), (0, padding_right), value = 0)    # e a dx
-
-        # Converti i tensori in torch.float32
-        padded_left_tensor = padded_left_tensor.to(torch.float32)
-        padded_right_tensor = padded_right_tensor.to(torch.float32)
-
-        sample = torch.cat((padded_left_tensor, padded_right_tensor), dim=0)
-
-        return sample, record.label
+        return sample, label
     
     def __len__(self):
         return len(self.emg_list)
