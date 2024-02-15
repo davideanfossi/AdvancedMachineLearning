@@ -15,6 +15,69 @@ def get_data_from_pkl_pd(pkl_file):
 def save_into_big_pkl(action_net_path, big_file_path):
     actionNet_train = get_data_from_pkl_pd(action_net_path);
     data = {"features": []}
+    len_time = 100
+    
+    # read each row of actionNet_train
+    for i in range(len(actionNet_train)):
+        index = actionNet_train.index[i]
+        file = actionNet_train.iloc[i].file
+        label = actionNet_train.iloc[i].description
+
+        id = file + "_" + str(index)
+
+        # get readings and timestamps from the file
+        Spkl = get_data_from_pkl_pd("readings/" + file.strip(".pkl"))
+        right_readings = Spkl.myo_right_readings[index]
+        left_readings = Spkl.myo_left_readings[index]  
+  
+        # separate the readings into bloks of 100 and truncate longer readings 
+        minimum = min(len(right_readings), len(left_readings))
+        right_readings = [right_readings[i:i+len_time] for i in range(0, minimum, len_time)]
+        left_readings = [left_readings[i:i+len_time] for i in range(0, minimum, len_time)]
+
+        # pop the last reading if it is smaller than len_time
+        if len(right_readings[-1]) < len_time or len(left_readings[-1]) < len_time:
+            right_readings.pop(-1)
+            left_readings.pop(-1)  
+
+        #[print(len(r), len(l)) for r, l in zip(right_readings, left_readings)]
+            
+        # check shape is correct
+        for i in range(len(right_readings)):
+            assert right_readings[i].shape == (len_time, 8)
+            assert left_readings[i].shape == (len_time, 8)
+
+        for i in range(len(right_readings)): 
+            data["features"].append({
+                "id": id + "_" + str(i),
+                "right_readings": right_readings[i],
+                "left_readings": left_readings[i],
+                "label": label,
+            })
+
+        #print(i + 1, "of", len(actionNet_train), "done")
+
+    
+    big_file = open(big_file_path, "wb")
+    pickle.dump(data, big_file)
+    big_file.close()
+
+
+def main():
+    save_into_big_pkl("action-net/ActionNet_train", "train_val/big_file_train.pkl")
+    save_into_big_pkl("action-net/ActionNet_test", "train_val/big_file_test.pkl")
+
+    test_train = get_data_from_pkl("train_val/big_file_train")
+    print(len(test_train["features"]))
+
+    test_test = get_data_from_pkl("train_val/big_file_test")
+    print(len(test_test["features"]))
+
+
+
+def save_into_big_pkl_OLD(action_net_path, big_file_path):
+    actionNet_train = get_data_from_pkl_pd(action_net_path);
+    data = {"features": []}
     len_time = 1000
     
     # read each row of actionNet_train
@@ -69,17 +132,6 @@ def save_into_big_pkl(action_net_path, big_file_path):
     big_file = open(big_file_path, "wb")
     pickle.dump(data, big_file)
     big_file.close()
-
-
-def main():
-    save_into_big_pkl("action-net/ActionNet_train", "train_val/big_file_train.pkl")
-    save_into_big_pkl("action-net/ActionNet_test", "train_val/big_file_test.pkl")
-
-    #test_train = get_data_from_pkl("big_file_train")
-    #print(len(test_train["features"]))
-
-    #test_test = get_data_from_pkl("big_file_test")
-    #print(len(test_test["features"]))
 
 if __name__ == '__main__':
     main()

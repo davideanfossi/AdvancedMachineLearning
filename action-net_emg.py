@@ -47,15 +47,15 @@ def main():
     #if (args.action == "train"):
     train_loader = torch.utils.data.DataLoader(
             ActionEMGDataset(args.dataset.shift.split("-")[0], 'train', args.dataset),
-            batch_size=1, shuffle=False, num_workers=args.dataset.workers,
+            batch_size=32, shuffle=False, num_workers=args.dataset.workers,
             pin_memory=True, drop_last=True
         )
     
     input_size = 16
-    model = getattr(model_list, args.model)(num_classes, input_size, 1) #ToDO: must be edited
+    #model = getattr(model_list, args.model)(num_classes, input_size, 1) #ToDO: must be edited
     # model.load_on_gpu(device)
     
-    train(model, train_loader, None, device, num_classes, input_size)
+    train(1, train_loader, None, device, num_classes, input_size)
 
 
 def train(action_classifier, train_loader, val_loader, device, num_classes, input_size):
@@ -67,7 +67,9 @@ def train(action_classifier, train_loader, val_loader, device, num_classes, inpu
         except StopIteration:
             return
 
-        action_classifier.forward(source_data)
+        print(source_data.shape)
+
+        #action_classifier.forward(source_data)
         # logits, _ = model.forward(source_data)
     return
 

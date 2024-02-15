@@ -269,26 +269,11 @@ class ActionEMGDataset(data.Dataset, ABC):
             pickle_name = "big_file" + "_test.pkl"
 
         self.list_file = pd.read_pickle(os.path.join(self.dataset_conf.annotations_path, pickle_name))
-        #print(f"list-file: {self.list_file}")
         self.emg_list = [ActionEMGRecord(tup, self.dataset_conf) for tup in self.list_file["features"]]
-        self.formatted_emg_list = []
 
-        id = 0
-        for emg_record in self.emg_list:
-            # controllo qual è la lunghezza minore tra left e right
-            common_length = min(len(emg_record.myo_left_readings), len(emg_record.myo_right_readings))
-            N = common_length//100
-            if(N>0):
-                for i in range (0, N):
-                    id+=1
-                    left = self._preprocess(emg_record.myo_left_readings[100*i:100*(i+1)])
-                    right = self._preprocess(emg_record.myo_right_readings[100*i:100*(i+1)])
-                    sample = np.concatenate((left, right), axis=1)
-                    self.formatted_emg_list.append({"id": id, "sample": sample, "label": emg_record.label})
 
     def _preprocess(self, readings):
         #* apply preprocessing to the EMG data
-
 
         # print(readings, readings.shape)
         #* Rectification
@@ -321,19 +306,20 @@ class ActionEMGDataset(data.Dataset, ABC):
 
         except:   
             print(f"🙀")
-        # print(readings_normalized, readings_normalized.shape)
-        # exit()
+
         return readings_normalized
 
     def __getitem__(self, index):
         # record is a row of the pkl file containing one sample/action
         # notice that it is already converted into a EpicVideoRecord object so that here you can access
         # all the properties of the sample easily
-        record = self.formatted_emg_list[index]
 
-        sample = torch.tensor(record["sample"], dtype=torch.float32)
-        # sample = sample.float(32)
-        label = record["label"]
+        record = self.emg_list[index]
+        left_readings = self._preprocess(record.myo_left_readings)
+        right_readings = self._preprocess(record.myo_right_readings)
+        sample = (np.concatenate((left_readings, right_readings), axis=1))
+        sample = torch.tensor(sample, dtype=torch.float32)
+        label = record.label
 
         # print(sample.shape, label)
 
