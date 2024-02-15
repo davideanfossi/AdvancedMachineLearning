@@ -3,13 +3,15 @@ from abc import ABC
 import pandas as pd
 from .epic_record import EpicVideoRecord
 from .action_record import ActionEMGRecord
+import torch
 import torch.utils.data as data
+import torch.nn.functional as F
 from PIL import Image
 import os
 import os.path
 from utils.logger import logger
 import numpy as np
-from scipy.signal import butter, lfilter, filtfilt
+from scipy.signal import butter, lfilter
 
 class EpicKitchensDataset(data.Dataset, ABC):
     def __init__(self, split, modalities, mode, dataset_conf, num_frames_per_clip, num_clips, dense_sampling,
@@ -257,6 +259,9 @@ class ActionEMGDataset(data.Dataset, ABC):
         self.dataset_conf = dataset_conf
         self.stride = self.dataset_conf.stride
         self.additional_info = additional_info
+        self.max_lenght = 0
+        self.max_length_left = 0
+        self.max_length_right = 0
 
         if self.mode == "train":
             pickle_name = "big_file" + "_train.pkl"
@@ -266,6 +271,20 @@ class ActionEMGDataset(data.Dataset, ABC):
         self.list_file = pd.read_pickle(os.path.join(self.dataset_conf.annotations_path, pickle_name))
         #print(f"list-file: {self.list_file}")
         self.emg_list = [ActionEMGRecord(tup, self.dataset_conf) for tup in self.list_file["features"]]
+        for emg_record in self.emg_list:
+            self.max_length_left = max(self.max_length_left, len(emg_record.myo_left_readings))
+            self.max_length_right = max(self.max_length_right, len(emg_record.myo_right_readings))
+            self.max_lenght = self.max_length_left + self.max_length_right
+
+        # for i in range (0, len(self.emg_list)):
+        #     max_length_left = max(len(self.emg_list[i].myo_left_readings), len(self.emg_list[i].myo_right_readings))
+        #     #print(len(self.emg_list[i].myo_left_readings), len(self.emg_list[i].myo_right_readings), rel_max_length)
+        #     if(rel_max_length>self.abs_max_lenght):
+        #         self.abs_max_lenght = rel_max_length
+
+        # print(f"abs: {self.abs_max_lenght}")
+            # print(self.emg_list[0])
+            # print(f"##) left: {len(self.emg_list[i].myo_left_readings)} - right: {len(self.emg_list[i].myo_rigth_readings)} - rel_max: {max(len(self.emg_list[0].myo_left_readings), len(self.emg_list[0].myo_right_readings))}")
         #print(f"mode: {self.mode}, len: {len(self.emg_list)}, [0]: {self.emg_list[0].label}")
         #exit()
 
@@ -313,7 +332,31 @@ class ActionEMGDataset(data.Dataset, ABC):
         left_readings = self._preprocess(record.myo_left_readings)
         right_readings = self._preprocess(record.myo_right_readings)
 
-        sample = {"left": left_readings, "right": right_readings}
+        padding_left = max(0, self.max_lenght_left - len(left_readings))
+        padding_right = max(0, self.max_lenght_right - len(right_readings))
+
+        padded_left_tensor = F.pad(torch.tensor(left_readings), (0, padding_left), value = 0)
+        padded_right_tensor = F.pad(torch.tensor(right_readings), (0, padding_right), value = 0)
+
+        concatenated_readings = np.concatenate((left_readings, right_readings))
+
+        # Calculate the length of padding needed
+        padding = max(0, self.max_lenght - len(concatenated_readings))
+        concatenated_tensor = torch.tensor(concatenated_readings)
+
+        # Pad left_readings with zeros
+        sample = F.pad(concatenated_tensor, (0, padding), value = 0)
+        #print(f"S) {len(sample)}")
+        # padded_right = F.pad(right_readings, (0, padding_right), value = 0)
+        # print(f"0)  {len(left_readings)} - {padding_left} - {len(padded_left)} - {padded_left}")
+
+        # Converti le liste in tensori PyTorch
+        # padded_left_tensor = torch.tensor(padded_left)
+        # padded_right_tensor = torch.tensor(padded_right)
+
+        # print(f"0)  {len(left_readings)} - {len(right_readings)} - {len(padded_left)} - {len(padded_right)}")
+
+        # sample = {"left": padded_left, "right": padded_right}
 
         return sample, record.label
     

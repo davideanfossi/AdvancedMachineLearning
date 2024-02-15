@@ -41,42 +41,34 @@ def init_operations():
 
 def main():
 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    num_classes, valid_labels = utils.utils.get_domains_and_labels_action_net(args)
+
+    #if (args.action == "train"):
     train_loader = torch.utils.data.DataLoader(
             ActionEMGDataset(args.dataset.shift.split("-")[0], 'train', args.dataset),
             batch_size=1, shuffle=False, num_workers=args.dataset.workers,
             pin_memory=True, drop_last=True
         )
     
+    input_size = train_loader.dataset.abs_max_lenght
+    model = getattr(model_list, args.model)(num_classes, input_size, 1) #ToDO: must be edited
+    # model.load_on_gpu(device)
+    
+    train(model, train_loader, None, device, num_classes, input_size)
+
+
+def train(action_classifier, train_loader, val_loader, device, num_classes, input_size):
+
     data_loader_source = iter(train_loader)
     for i in range(0, args.train.num_iter):
         try:
             source_data, source_label = next(data_loader_source)    #source_label serve per la validation
-            # print(next(data_loader_source))
         except StopIteration:
             return
-    
-    num_classes, valid_labels = utils.utils.get_domains_and_labels_action_net(args)
-    model = getattr(model_list, args.model)(num_classes, 1) #ToDO: must be edited
 
-    #? serve il wrapper? Direi di no al momento
-    # action_classifier = tasks.ActionRecognition("action-classifier", model, args.batch_size,      #* Passa alcuni parametri del default.yaml
-    #                                             None, args.models_dir, num_classes,
-    #                                             args.train.num_clips, args.models, args=args)
-    
-    
-    #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    #model.load_on_gpu(device)
-
-    model.forward(source_data)
-    # logits, _ = model.forward(source_data)
-
-    # for i_val, (label, left_reading, right_reading, id) in enumerate(train_loader):
-    #     print(id, left_reading, right_reading)
-    #     exit()
-
-
-
-def train(action_classifier, train_loader, val_loader, device, num_classes):
+        action_classifier.forward(source_data)
+        # logits, _ = model.forward(source_data)
     return
 
 

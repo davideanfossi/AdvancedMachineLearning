@@ -76,18 +76,34 @@ class TransformerClassifier(nn.Module):
         return logits, {"features": feat}
     
 class LSTM_emg(nn.Module):
-    def __init__(self, num_classes): #* aggiusta i parametri, ad es. passa la batch come arg
+    def __init__(self, num_classes, input_size, batch_size): #* aggiusta i parametri, ad es. passa la batch come arg
         super(LSTM_emg, self).__init__()
-        self.input_size = ?
-        self.hidden_size = ?
-        self.num_layers = ?
-        self.batch_size = 1
+        self.input_size = input_size
+        self.hidden_size = 512
+        self.num_layers = 2
+        self.batch_size = batch_size
         self.lstm = nn.LSTM(self.input_size, self.hidden_size, self.num_layers, 
                             bias=True, batch_first=True, dropout=0.5, bidirectional=False, 
                             proj_size=0, device=None, dtype=None)
         self.fc = nn.Linear(self.hidden_size, num_classes)
-        print("1")
+        print(f"2)  {input_size}")
 
     def forward(self, x):
-        #print(x, len(x))
+        #* x = {"left": [...], "right": [...]} inizialmente
+        #* x = [....] x.shape = (1, input_size)    ora
+
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
+        c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
+
+        x = x.unsqueeze(1) # Vogliamo (1, 1, input_size)
+
+        out, _ = self.lstm(x, (h0, c0)) #? Lui vuole 100x5 come output
+
+        # Ridimensiona l'output per adattarlo al layer fully connected
+        feat = out.view(-1, self.hidden_size)  # Ridimensiona l'output in una dimensione lineare
+        logits = self.fc(feat)  # Passa l'output attraverso il layer fully connected
+
+        #! Ridimensiona l'output al formato richiesto (100x5)
+        feat = out.view(100, 5)
+
         return logits, {"features": feat}
