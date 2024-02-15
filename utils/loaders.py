@@ -259,7 +259,7 @@ class ActionEMGDataset(data.Dataset, ABC):
         self.dataset_conf = dataset_conf
         self.stride = self.dataset_conf.stride
         self.additional_info = additional_info
-        self.max_lenght = 0
+        self.max_length = 0
         self.max_length_left = 0
         self.max_length_right = 0
 
@@ -274,7 +274,7 @@ class ActionEMGDataset(data.Dataset, ABC):
         for emg_record in self.emg_list:
             self.max_length_left = max(self.max_length_left, len(emg_record.myo_left_readings))
             self.max_length_right = max(self.max_length_right, len(emg_record.myo_right_readings))
-            self.max_lenght = self.max_length_left + self.max_length_right
+            self.max_length = self.max_length_left + self.max_length_right
 
         # for i in range (0, len(self.emg_list)):
         #     max_length_left = max(len(self.emg_list[i].myo_left_readings), len(self.emg_list[i].myo_right_readings))
@@ -297,7 +297,7 @@ class ActionEMGDataset(data.Dataset, ABC):
 
         #* low-pass Filter
         # Frequenza di campionamento (Hz)
-        fs = 100  # Assumo 100 Hz -> una reading ogni 0,01s
+        fs = 160  # Frequenza dei sampling data da loro
         f_cutoff = 5  # Frequenza di taglio
 
         # Frequenza di taglio normalizzata
@@ -317,6 +317,8 @@ class ActionEMGDataset(data.Dataset, ABC):
         # abs value
         readings_normalized = np.abs(readings_normalized)
 
+        #! concatena 8 e 8 per avere i 16
+
         #* Overall forearm activation Estimation
         # sum the readings of the 8 channels
         wrist_stiffnes = np.sum(readings_normalized, axis=1)
@@ -332,31 +334,17 @@ class ActionEMGDataset(data.Dataset, ABC):
         left_readings = self._preprocess(record.myo_left_readings)
         right_readings = self._preprocess(record.myo_right_readings)
 
-        padding_left = max(0, self.max_lenght_left - len(left_readings))
-        padding_right = max(0, self.max_lenght_right - len(right_readings))
+        padding_left = max(0, self.max_length_left - len(left_readings))
+        padding_right = max(0, self.max_length_right - len(right_readings))
 
-        padded_left_tensor = F.pad(torch.tensor(left_readings), (0, padding_left), value = 0)
-        padded_right_tensor = F.pad(torch.tensor(right_readings), (0, padding_right), value = 0)
+        padded_left_tensor = F.pad(torch.tensor(left_readings), (0, padding_left), value = 0)   #aggiungo padd a sx
+        padded_right_tensor = F.pad(torch.tensor(right_readings), (0, padding_right), value = 0)    # e a dx
 
-        concatenated_readings = np.concatenate((left_readings, right_readings))
+        # Converti i tensori in torch.float32
+        padded_left_tensor = padded_left_tensor.to(torch.float32)
+        padded_right_tensor = padded_right_tensor.to(torch.float32)
 
-        # Calculate the length of padding needed
-        padding = max(0, self.max_lenght - len(concatenated_readings))
-        concatenated_tensor = torch.tensor(concatenated_readings)
-
-        # Pad left_readings with zeros
-        sample = F.pad(concatenated_tensor, (0, padding), value = 0)
-        #print(f"S) {len(sample)}")
-        # padded_right = F.pad(right_readings, (0, padding_right), value = 0)
-        # print(f"0)  {len(left_readings)} - {padding_left} - {len(padded_left)} - {padded_left}")
-
-        # Converti le liste in tensori PyTorch
-        # padded_left_tensor = torch.tensor(padded_left)
-        # padded_right_tensor = torch.tensor(padded_right)
-
-        # print(f"0)  {len(left_readings)} - {len(right_readings)} - {len(padded_left)} - {len(padded_right)}")
-
-        # sample = {"left": padded_left, "right": padded_right}
+        sample = torch.cat((padded_left_tensor, padded_right_tensor), dim=0)
 
         return sample, record.label
     

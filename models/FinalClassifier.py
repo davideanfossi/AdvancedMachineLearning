@@ -97,13 +97,19 @@ class LSTM_emg(nn.Module):
 
         x = x.unsqueeze(1) # Vogliamo (1, 1, input_size)
 
+        print(x.shape)
+
         out, _ = self.lstm(x, (h0, c0)) #? Lui vuole 100x5 come output
 
         # Ridimensiona l'output per adattarlo al layer fully connected
         feat = out.view(-1, self.hidden_size)  # Ridimensiona l'output in una dimensione lineare
-        logits = self.fc(feat)  # Passa l'output attraverso il layer fully connected
+        # Prendi solo l'output dell'ultimo timestep
+        out_last = out[:, -1, :]  
+        
+        print(feat.shape, out.shape, out_last.shape)
+        logits = self.fc(out_last)  # Passa l'output attraverso il layer fully connected
 
         #! Ridimensiona l'output al formato richiesto (100x5)
-        feat = out.view(100, 5)
+        feat = out_last.view(100, 5)
 
         return logits, {"features": feat}
