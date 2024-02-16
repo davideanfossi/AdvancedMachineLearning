@@ -29,7 +29,7 @@ class LSTM(nn.Module):
 
         # Forward pass through LSTM
         out, _ = self.lstm(x, (h0, c0)) # _ = hn, cn (non ci servono al momento)
-        # out: contains the output features (batch_size, sequence_length, lstm_hidden_size)=(32, 1, 32)
+        # out: contains the output features (batch_size, sequence_length, lstm_hidden_size)=(32, 1, 512)
         # hn: final hidden state for each element in sequence, stessa size di h0
         # cn: final cell state for each element in sequence, stessa di c0
 
@@ -78,8 +78,8 @@ class TransformerClassifier(nn.Module):
 class ActionNetwork(nn.Module):
     def __init__(self, num_classes, input_size, batch_size): #* aggiusta i parametri, ad es. passa la batch come arg
         super(ActionNetwork, self).__init__()
-        self.input_size = input_size
-        self.lstm_hidden_size = 5
+        self.input_size = 1600 # input_size
+        self.lstm_hidden_size = 800
         self.lstm2_hidden_size = 50
         self.num_layers = 1
         self.batch_size = batch_size
@@ -87,41 +87,80 @@ class ActionNetwork(nn.Module):
                             bias=True, batch_first=True, dropout=0, bidirectional=False, 
                             proj_size=0, device=None, dtype=None)
         self.lstm2 = nn.LSTM(self.lstm_hidden_size, self.lstm2_hidden_size, self.num_layers, 
-                            bias=True, batch_first=True, dropout=0, bidirectional=False, 
+                            bias=True, batch_first=True, dropout=0.2, bidirectional=False, 
                             proj_size=0, device=None, dtype=None)
         
         self.dropout = nn.Dropout(p=0.2, inplace=False)
-        self.fc1 = nn.Linear(self.lstm2_hidden_size, num_classes)
+        self.fc1 = nn.Linear(50, num_classes)
         self.fc2 = nn.Linear(num_classes, num_classes)
 
-    def forward(self, x):
+    def forward_old(self, x):
         #* LSTM 1 - x.shape = (32, 100, 16)
-
+        
         h0 = torch.zeros(self.num_layers, x.size(0), self.lstm_hidden_size).to(x.device)
         c0 = torch.zeros(self.num_layers, x.size(0), self.lstm_hidden_size).to(x.device)
 
         out, _ = self.lstm(x, (h0, c0)) #* (32, 100, 5)
 
-        h02 = torch.zeros(self.num_layers, out.size(0), 50).to(x.device)
-        c02 = torch.zeros(self.num_layers, out.size(0), 50).to(x.device)
+        h02 = torch.zeros(self.num_layers, out.size(0), self.lstm2_hidden_size).to(x.device)
+        c02 = torch.zeros(self.num_layers, out.size(0), self.lstm2_hidden_size).to(x.device)
 
         #* LSTM 2
 
-        out2, _ = self.lstm2(out, (h02, c02))
-
-        out2 = out2[:, -1, :]   #* (32, 50)
+        out2, _ = self.lstm2(out, (h02, c02)) #* (32, 100, 1)
+        out2 = out2.squeeze(2)  #* (32, 100)
+        
+        #out2 = out2[:, -1, :]   #* (32, 50)
 
         #* Dropout
 
-        out3 = self.dropout(out2)  #* (32, 50)
+        #out3 = self.dropout(out2)  #* (32, 50)
 
         #* DENSE NN
         # FC2(RELU(FC1))
-        logits = self.fc2(torch.relu(self.fc1(out3)))  #* (32, 20)
+        #logits = self.fc2(torch.relu(self.fc1(out2)))  #* (32, 20)
+        logits = self.fc1(out2)  #* (32, 20)
 
         #* SoftMax
         predicted_activity = torch.argmax(F.softmax(logits, dim=1), dim=1)
 
         #print(out.shape, out2.shape, out3.shape, logits.shape)
 
-        return logits, {"features": out3}
+        return logits, {"features": out2}
+
+    def forward(self, x):
+        #* LSTM 1 - x.shape = (32, 100, 16)
+        x = x.reshape(32, 1600)  #* (32, 100, 16) -> (32, 1600)
+        x = x.unsqueeze(1)
+
+        h0 = torch.zeros(self.num_layers, x.size(0), self.lstm_hidden_size).to(x.device)
+        c0 = torch.zeros(self.num_layers, x.size(0), self.lstm_hidden_size).to(x.device)
+
+        out, _ = self.lstm(x, (h0, c0)) #* (32, 100, 5)
+
+        h02 = torch.zeros(self.num_layers, out.size(0), self.lstm2_hidden_size).to(x.device)
+        c02 = torch.zeros(self.num_layers, out.size(0), self.lstm2_hidden_size).to(x.device)
+
+        #* LSTM 2
+
+        out2, _ = self.lstm2(out, (h02, c02)) #* (32, 100, 1)
+        #out2 = out2.squeeze(2)  #* (32, 100)
+        
+        #out2 = out2[:, -1, :]   #* (32, 50)
+
+        #* Dropout
+
+        #out3 = self.dropout(out2)  #* (32, 50)
+
+        #* DENSE NN
+        # FC2(RELU(FC1))
+        #logits = self.fc2(torch.relu(self.fc1(out2)))  #* (32, 20)
+        feat = out2.view(-1, self.lstm2_hidden_size)
+        logits = self.fc1(feat)  #* (32, 20)
+
+        #* SoftMax
+        predicted_activity = torch.argmax(F.softmax(logits, dim=1), dim=1)
+
+        #print(out.shape, out2.shape, out3.shape, logits.shape)
+
+        return logits, {"features": feat}

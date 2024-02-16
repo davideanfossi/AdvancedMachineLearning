@@ -67,12 +67,12 @@ def main():
     label_dict = {
         'Clean a pan with a sponge': 0,
         'Clean a pan with a towel': 1,
-        'Clean a plate with a sponge': 2,
-        'Clean a plate with a towel': 3,
-        'Clear cutting board': 4,
-        'Get items from cabinets: 3 each large/small plates, bowls, mugs, glasses, sets of utensils': 5,
-        'Get items from refrigerator/cabinets/drawers': 6,
-        'Get/replace items from refrigerator/cabinets/drawers': 6,
+        'Get items from refrigerator/cabinets/drawers': 2,
+        'Get/replace items from refrigerator/cabinets/drawers': 2,
+        'Clean a plate with a sponge': 3,
+        'Clean a plate with a towel': 4,
+        'Clear cutting board': 5,
+        'Get items from cabinets: 3 each large/small plates, bowls, mugs, glasses, sets of utensils': 6,
         'Load dishwasher: 3 each large/small plates, bowls, mugs, glasses, sets of utensils': 7,
         'Open a jar of almond butter': 8,
         'Open/close a jar of almond butter': 8,
@@ -92,11 +92,22 @@ def main():
     save_into_big_pkl("action-net/ActionNet_train", "train_val/big_file_train.pkl",label_dict)
     save_into_big_pkl("action-net/ActionNet_test", "train_val/big_file_test.pkl", label_dict)
 
-    #test_train = get_data_from_pkl("train_val/big_file_train")
+    # test_train = get_data_from_pkl("train_val/big_file_train")
+    # dict = {}
+    # for sample in test_train["features"]:
+    #     if sample["label"] in dict:
+    #         dict[sample["label"]] += 1
+    #     else:
+    #         dict[sample["label"]] = 1
+
+    # print(dict)
+
     #print(test_train["features"][0])
 
-    # test_train = get_data_from_pkl("train_val/big_file_train")
-    # print(len(test_train["features"]))
+    #test_train = get_data_from_pkl("train_val/big_file_train")
+    # for sample in test_train["features"]:
+    #     print(sample["label"])
+    #print(test_train["features"][:]["label"])
 
     # test_test = get_data_from_pkl("train_val/big_file_test")
     # print(len(test_test["features"]))

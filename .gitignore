@@ -6,6 +6,7 @@ aggregated_features/*
 Experiment_logs
 saved_models
 TEST_RESULTS
+models"
 
 readings
 train_val/big_file_test.pkl
