@@ -11,7 +11,7 @@ import os
 import os.path
 from utils.logger import logger
 import numpy as np
-from scipy.signal import butter, lfilter
+from scipy.signal import butter, filtfilt
 
 class EpicKitchensDataset(data.Dataset, ABC):
     def __init__(self, split, modalities, mode, dataset_conf, num_frames_per_clip, num_clips, dense_sampling,
@@ -275,32 +275,28 @@ class ActionEMGDataset(data.Dataset, ABC):
     def _preprocess(self, readings):
         #* apply preprocessing to the EMG data
 
-        # print(readings, readings.shape)
         #* Rectification
         # abs value
-        #print(readings[0])
         readings_rectified = np.abs(readings)
-        # print(readings_rectified, readings_rectified.shape)
-        
         #* low-pass Filter
-        # # Frequenza di campionamento (Hz)
-        # fs = 160  # Frequenza dei sampling data da loro
-        # f_cutoff = 5  # Frequenza di taglio
+        # Frequenza di campionamento (Hz)
+        fs = 160  # Frequenza dei sampling data da loro
+        f_cutoff = 5  # Frequenza di taglio
 
-        # # Frequenza di taglio normalizzata
-        # f_cutoff_norm = f_cutoff / (0.5 * fs)
-        # # Ordine del filtro
-        # order = 4 
-        # # Calcolo coefficienti del filtro
-        # b, a = butter(order, f_cutoff_norm, btype='low', analog=False)
-        # # Concateno tutti i vettori in un'unica matrice
-        # matrice_vettori = np.array(readings_rectified) # concatenate?
+        # Ordine del filtro
+        order = 4 
+        # Calcolo dei coefficienti del filtro
+        b, a = butter(order, f_cutoff / (fs / 2), btype='low')
+        # Concateno tutti i vettori in un'unica matrice
+        readings_filtered = np.zeros_like(readings_rectified, dtype=float)
+        for i in range(8):  # 8 colonne
+            readings_filtered[:, i] = filtfilt(b, a, readings_rectified[:, i])
 
-        # # Applicazione filtro
-        # readings_filtered = lfilter(b, a, matrice_vettori.T, axis=0).T
+        print(readings_rectified[:6], readings_rectified.shape)
+        print(readings_filtered[:6], readings_filtered.shape)
+        # exit()
 
         # convert to tensor
-        readings_filtered = readings_rectified
         readings_filtered = torch.tensor(readings_filtered, dtype=torch.float32)
         
         min_val, _ = torch.min(readings_filtered, dim=1, keepdim=True)
@@ -311,32 +307,8 @@ class ActionEMGDataset(data.Dataset, ABC):
         # # Normalize the data to the range -1 to 1
         normalized_data = 2 * (readings_filtered - min_val) / g - 1
 
-        # mean = torch.mean(readings_filtered, dim=1, keepdim=True)
-        # std = torch.std(readings_filtered, dim=1, keepdim=True)
-        # normalized_data = 2 * (readings_filtered - mean) / std  - 1
-        
-        
-        #normalized_data = F.normalize(readings_filtered, mean=[mean], std=[std])
-        
+        print(normalized_data[:6], normalized_data.shape)
 
-        # norm = torch.norm(readings_filtered, p=2, dim=1, keepdim=True)
-        # normalized_data = readings_filtered / norm
-        # normalized_data = normalized_data * 2 - 1
-
-        #print(readings_filtered[0])
-        #print(normalized_data[0])
-        #exit()
-
-        # try:
-        #     # Trova il valore massimo e minimo globale tra tutti i vettori
-        #     global_max = np.max(readings_filtered)
-        #     global_min = np.min(readings_filtered)
-
-        #     # Normalizza tutti i vettori in readings_filtered
-        #     readings_normalized = 2 * (readings_filtered - global_min) / (global_max - global_min) - 1
-
-        # except:   
-        #     print(f"🙀")
 
         return normalized_data
 
@@ -348,13 +320,8 @@ class ActionEMGDataset(data.Dataset, ABC):
         record = self.emg_list[index]
         left_readings = self._preprocess(record.myo_left_readings)
         right_readings = self._preprocess(record.myo_right_readings)
-        #left_readings = record.myo_left_readings
-        #right_readings = record.myo_right_readings
         sample = (np.concatenate((left_readings, right_readings), axis=1))
         sample = torch.tensor(sample, dtype=torch.float32)
-        #label = record.label
-
-        # print(sample.shape, label)
         label = torch.tensor(record.label)
         out = {"EMG": sample.unsqueeze(0)} 
         return out, label
