@@ -7,6 +7,7 @@ import torch
 from utils.loaders import ActionEMGDataset
 from utils.args import args
 from utils.utils import pformat_dict
+from utils.utils import get_domains_and_labels_action_net
 import utils
 import numpy as np
 import os
@@ -40,16 +41,20 @@ def init_operations():
 
 
 def main():
-
-    global training_iterations
+    global training_iterations, modalities
+    init_operations()
+    modalities = args.modality
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    num_classes, valid_labels = utils.utils.get_domains_and_labels_action_net(args)
+    num_classes, valid_labels = get_domains_and_labels_action_net(args)
     input_size = 16
-    model = getattr(model_list, args.model)(num_classes, input_size, args.batch_size) #ToDO: must be edited
+
+    models = {}
+
+    models["EMG"] = getattr(model_list, args.models["EMG"].model)(num_classes, input_size, args.batch_size) #ToDO: must be edited
 
     # the models are wrapped into the ActionRecognition task which manages all the training steps
-    action_classifier = tasks.ActionRecognition("action-classifier", model, args.batch_size,      #* Passa alcuni parametri del default.yaml
+    action_classifier = tasks.ActionRecognition("action-classifier", models, args.batch_size,      #* Passa alcuni parametri del default.yaml
                                                 args.total_batch, args.models_dir, num_classes,
                                                 args.train.num_clips, args.models, args=args)
     action_classifier.load_on_gpu(device)
@@ -62,7 +67,7 @@ def main():
             pin_memory=True, drop_last=True
         )
 
-    val_loader = torch.utils.data.DataLoader(torch.utils.data.DataLoader(
+    val_loader = torch.utils.data.DataLoader(
             ActionEMGDataset(args.dataset.shift.split("-")[0], 'val', args.dataset),
             batch_size=args.batch_size, shuffle=False, num_workers=args.dataset.workers,
             pin_memory=True, drop_last=True
@@ -100,8 +105,13 @@ def train(action_classifier, train_loader, val_loader, device, num_classes, inpu
             return
         end_t = datetime.now()
         # print(source_data.shape)
+        data = {}
+        data["EMG"] = source_data.to(device)
+        
+        source_label = source_label.to(device)
 
-        logits, _ = action_classifier.forward(source_data)
+        logits, _ = action_classifier.forward(data)
+        
         action_classifier.compute_loss(logits, source_label, loss_weight=1)
         action_classifier.backward(retain_graph=False)
         action_classifier.compute_accuracy(logits, source_label)
@@ -134,7 +144,62 @@ def train(action_classifier, train_loader, val_loader, device, num_classes, inpu
 
 
 def validate(model, val_loader, device, it, num_classes):
-   return 
+    global modalities
+
+    model.reset_acc()
+    model.train(False)
+    logits = {}
+
+    # Iterate over the models
+    with torch.no_grad():
+        for i_val, (source_data, label) in enumerate(val_loader):
+            label = label.to(device)
+            data = {}
+            data["EMG"] = source_data.to(device)
+
+            for m in modalities:
+                batch = data[m].shape[0]
+                logits[m] = torch.zeros((args.test.num_clips, batch, num_classes)).to(device)
+
+            clip = {}
+            data["EMG"] = data["EMG"].unsqueeze(1)
+            for i_c in range(args.test.num_clips): 
+                for m in modalities:
+                    clip[m] = data[m][:, i_c].to(device)
+                    
+                output, _ = model(clip)
+                for m in modalities:
+                    logits[m][i_c] = output[m]
+
+            for m in modalities:
+                logits[m] = torch.mean(logits[m], dim=0)
+
+            model.compute_accuracy(logits, label)
+
+            #if (i_val + 1) % (len(val_loader) // 5) == 0:
+                #logger.info("[{}/{}] top1= {:.3f}% top5 = {:.3f}%".format(i_val + 1, len(val_loader),
+                                                                          #model.accuracy.avg[1], model.accuracy.avg[5]))
+
+        #class_accuracies = [(x / y) * 100 for x, y in zip(model.accuracy.correct, model.accuracy.total)]
+        class_accuracies = [(x / y) * 100 if y > 0 else 0.0 for x, y in zip(model.accuracy.correct, model.accuracy.total)]
+        logger.info('Final accuracy: top1 = %.2f%%\ttop5 = %.2f%%' % (model.accuracy.avg[1],
+                                                                      model.accuracy.avg[5]))
+        for i_class, class_acc in enumerate(class_accuracies):
+            logger.info('Class %d = [%d/%d] = %.2f%%' % (i_class,
+                                                         int(model.accuracy.correct[i_class]),
+                                                         int(model.accuracy.total[i_class]),
+                                                         class_acc))
+
+    logger.info('Accuracy by averaging class accuracies (same weight for each class): {}%'
+                .format(np.array(class_accuracies).mean(axis=0)))
+    test_results = {'top1': model.accuracy.avg[1], 'top5': model.accuracy.avg[5],
+                    'class_accuracies': np.array(class_accuracies)}
+
+    with open(os.path.join(args.log_dir, f'val_precision_{args.dataset.shift.split("-")[0]}-'
+                                         f'{args.dataset.shift.split("-")[-1]}.txt'), 'a+') as f:
+        f.write("[%d/%d]\tAcc@top1: %.2f%%\n" % (it, args.train.num_iter, test_results['top1']))
+
+    return test_results
 
 
 if __name__ == '__main__':

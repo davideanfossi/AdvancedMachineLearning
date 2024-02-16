@@ -319,10 +319,10 @@ class ActionEMGDataset(data.Dataset, ABC):
         right_readings = self._preprocess(record.myo_right_readings)
         sample = (np.concatenate((left_readings, right_readings), axis=1))
         sample = torch.tensor(sample, dtype=torch.float32)
-        label = record.label
+        #label = record.label
 
         # print(sample.shape, label)
-
+        label = torch.tensor(record.label)
         return sample, label
     
     def __len__(self):
