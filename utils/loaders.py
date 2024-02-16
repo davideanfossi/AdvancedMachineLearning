@@ -292,8 +292,8 @@ class ActionEMGDataset(data.Dataset, ABC):
         for i in range(8):  # 8 colonne
             readings_filtered[:, i] = filtfilt(b, a, readings_rectified[:, i])
 
-        print(readings_rectified[:6], readings_rectified.shape)
-        print(readings_filtered[:6], readings_filtered.shape)
+        #print(readings_rectified[:6], readings_rectified.shape)
+        #print(readings_filtered[:6], readings_filtered.shape)
         # exit()
 
         # convert to tensor
@@ -307,7 +307,7 @@ class ActionEMGDataset(data.Dataset, ABC):
         # # Normalize the data to the range -1 to 1
         normalized_data = 2 * (readings_filtered - min_val) / g - 1
 
-        print(normalized_data[:6], normalized_data.shape)
+        #print(normalized_data[:6], normalized_data.shape)
 
 
         return normalized_data
