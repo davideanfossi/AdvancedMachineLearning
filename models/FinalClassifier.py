@@ -100,7 +100,7 @@ class ActionNetwork(nn.Module):
                             bias=True, batch_first=True, dropout=0, bidirectional=False, 
                             proj_size=0, device=None, dtype=None)
         self.lstm2 = nn.LSTM(self.lstm_hidden_size, self.lstm2_hidden_size, self.num_layers, 
-                            bias=True, batch_first=True, dropout=0.2, bidirectional=False, 
+                            bias=True, batch_first=True, dropout=0, bidirectional=False, 
                             proj_size=0, device=None, dtype=None)
         
         self.dropout = nn.Dropout(p=0.2, inplace=False)
@@ -147,11 +147,11 @@ class ActionNetwork(nn.Module):
 
         out2, _ = self.lstm2(out, (h02, c02)) # (32, 1, 50)
         
-        #out3 = self.dropout(out2)  
+        out3 = self.dropout(out2)  
 
-        feat = out2.view(-1, self.lstm2_hidden_size) # (32, 50)
-        # logits = self.fc2(torch.relu(self.fc1(out2)))  # (32, 20)
-        logits = self.fc1(feat)  # (32, 20)
+        feat = out3.view(-1, self.lstm2_hidden_size) # (32, 50)
+        logits = self.fc2(torch.relu(self.fc1(feat)))  # (32, 20)
+        #logits = self.fc1(feat)  # (32, 20)
 
         #* SoftMax
         predicted_activity = torch.argmax(F.softmax(logits, dim=1), dim=1)
