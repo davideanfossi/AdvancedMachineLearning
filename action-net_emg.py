@@ -4,15 +4,17 @@ from utils.logger import logger
 import torch.nn.parallel
 import torch.optim
 import torch
-from utils.loaders import EpicKitchensDataset
+from utils.loaders import ActionEMGDataset
 from utils.args import args
 from utils.utils import pformat_dict
+from utils.utils import get_domains_and_labels_action_net
 import utils
 import numpy as np
 import os
 import models as model_list
 import tasks
 import wandb
+from torchvision import transforms
 
 # global variables among training functions
 training_iterations = 0
@@ -43,26 +45,13 @@ def main():
     init_operations()
     modalities = args.modality
 
-    # recover valid paths, domains, classes
-    # this will output the domain conversion (D1 -> 8, et cetera) and the label list
-    num_classes, valid_labels, source_domain, target_domain = utils.utils.get_domains_and_labels(args)
-    # device where everything is run
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    num_classes, valid_labels = get_domains_and_labels_action_net(args)
+    input_size = 16
 
-    # these dictionaries are for more multi-modal training/testing, each key is a modality used
     models = {}
-    logger.info("Instantiating models per modality")
-    for m in modalities:
-        logger.info('{} Net\tModality: {}'.format(args.models[m].model, m)) #* args.models[m].model è uguale a Classifier
-        # notice that here, the first parameter passed is the input dimension
-        # In our case it represents the feature dimensionality which is equivalent to 1024 for I3D
-        match args.models[m].model:
-            case "TransformerClassifier":
-                models[m] = getattr(model_list, args.models[m].model)(num_classes)
-            case "LSTM":
-                models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size)
-            case "MLP":
-                models[m] = getattr(model_list, args.models[m].model)()
+
+    models["EMG"] = getattr(model_list, args.models["EMG"].model)(num_classes, input_size, args.batch_size) #ToDO: must be edited
 
     # the models are wrapped into the ActionRecognition task which manages all the training steps
     action_classifier = tasks.ActionRecognition("action-classifier", models, args.batch_size,      #* Passa alcuni parametri del default.yaml
@@ -70,58 +59,32 @@ def main():
                                                 args.train.num_clips, args.models, args=args)
     action_classifier.load_on_gpu(device)
 
-    if args.action == "train":
-        # resume_from argument is adopted in case of restoring from a checkpoint
-        if args.resume_from is not None:
-            action_classifier.load_last_model(args.resume_from)
-        # define number of iterations I'll do with the actual batch: we do not reason with epochs but with iterations
-        # i.e. number of batches passed
-        # notice, here it is multiplied by tot_batch/batch_size since gradient accumulation technique is adopted
-        training_iterations = args.train.num_iter * (args.total_batch // args.batch_size)
-        # all dataloaders are generated here
-        train_loader = torch.utils.data.DataLoader(EpicKitchensDataset(args.dataset.shift.split("-")[0], modalities, #* prende aggregated_feat_train.pkl
-                                                                       'train', args.dataset, None, None, None,
-                                                                       None, load_feat=True),
-                                                   batch_size=args.batch_size, shuffle=True,
-                                                   num_workers=args.dataset.workers, pin_memory=True, drop_last=True)
+    #if (args.action == "train"):
+    training_iterations = args.train.num_iter * (args.total_batch // args.batch_size)
+    train_loader = torch.utils.data.DataLoader(
+            ActionEMGDataset(args.dataset.shift.split("-")[0], 'train', args.dataset),
+            batch_size=args.batch_size, shuffle=False, num_workers=args.dataset.workers,
+            pin_memory=True, drop_last=True
+        )
 
-        val_loader = torch.utils.data.DataLoader(EpicKitchensDataset(args.dataset.shift.split("-")[-1], modalities,  #* prende aggregated_feat_test.pkl
-                                                                     'val', args.dataset, None, None, None,
-                                                                     None, load_feat=True),
-                                                 batch_size=args.batch_size, shuffle=False,
-                                                 num_workers=args.dataset.workers, pin_memory=True, drop_last=False)
-        train(action_classifier, train_loader, val_loader, device, num_classes)
-
-    elif args.action == "validate":
-        if args.resume_from is not None:
-            action_classifier.load_last_model(args.resume_from)
-        val_loader = torch.utils.data.DataLoader(EpicKitchensDataset(args.dataset.shift.split("-")[-1], modalities,
-                                                                     'val', args.dataset, None, None, None,
-                                                                     None, load_feat=True),
-                                                 batch_size=args.batch_size, shuffle=False,
-                                                 num_workers=args.dataset.workers, pin_memory=True, drop_last=False)
-
-        validate(action_classifier, val_loader, device, action_classifier.current_iter, num_classes)
+    val_loader = torch.utils.data.DataLoader(
+            ActionEMGDataset(args.dataset.shift.split("-")[0], 'val', args.dataset),
+            batch_size=args.batch_size, shuffle=False, num_workers=args.dataset.workers,
+            pin_memory=True, drop_last=True
+        )
+    
+    train(action_classifier, train_loader, val_loader, device, num_classes, input_size)
 
 
-def train(action_classifier, train_loader, val_loader, device, num_classes):
-    """
-    function to train the model on the test set
-    action_classifier: Task containing the model to be trained
-    train_loader: dataloader containing the training data
-    val_loader: dataloader containing the validation data
-    device: device on which you want to test
-    num_classes: int, number of classes in the classification problem
-    """
-    global training_iterations, modalities
+def train(action_classifier, train_loader, val_loader, device, num_classes, input_size):
 
-    data_loader_source = iter(train_loader) #* analogo all'enumerate, chiama _get_item che chiama _get_train_indices
+    global training_iterations
+
+    data_loader_source = iter(train_loader)
     action_classifier.train(True)
     action_classifier.zero_grad()
     iteration = action_classifier.current_iter * (args.total_batch // args.batch_size)
 
-    # the batch size should be total_batch but batch accumulation is done with batch size = batch_size.
-    # real_iter is the number of iterations if the batch size was really total_batch
     for i in range(iteration, training_iterations):
         # iteration w.r.t. the paper (w.r.t the bs to simulate).... i is the iteration with the actual bs( < tot_bs)
         real_iter = (i + 1) / (args.total_batch // args.batch_size)
@@ -136,38 +99,31 @@ def train(action_classifier, train_loader, val_loader, device, num_classes):
         Retrieve the data from the loaders
         """
         start_t = datetime.now()
-        # the following code is necessary as we do not reason in epochs so as soon as the dataloader is finished we need
-        # to redefine the iterator
+        
         try:
-            # source_data = {'RGB': torch.Tensor(32, 1024)}, source_label = torch.Tensor(32)
-            source_data, source_label = next(data_loader_source)
+            source_data, source_label = next(data_loader_source)    #source_label serve per la validation
         except StopIteration:
             data_loader_source = iter(train_loader)
             source_data, source_label = next(data_loader_source)
+
         end_t = datetime.now()
-        #*logger.info(f"##### DEBUG ##### - SOURCE_LABEL: {source_label} | LEN: {len(source_label)}")
-
-        logger.info(f"Iteration {i}/{training_iterations} batch retrieved! Elapsed time = "
-                    f"{(end_t - start_t).total_seconds() // 60} m {(end_t - start_t).total_seconds() % 60} s")
-
-        ''' Action recognition'''
-        source_label = source_label.to(device)
+        # print(source_data.shape)
         data = {}
+        data["EMG"] = source_data.to(device)
+        
+        source_label = source_label.to(device)
 
-        for clip in range(args.train.num_clips):
-            # in case of multi-clip training one clip per time is processed
-            for m in modalities:
-                data[m] = source_data[m][:, clip].to(device) 
-                #print(data[m].shape, source_data[m].shape)
-                #torch.Size([32, 1024]) torch.Size([32, 1, 1024])
-                #*logger.info(f"##### DEBUG ##### - SOURCE_DATA: {source_data['RGB']} | SHAPE: {source_data['RGB'].shape} | DATA: {data['RGB']} | SHAPE: {data['RGB'].shape}")
+        logits, _ = action_classifier.forward(data)
 
-            logits, _ = action_classifier.forward(data)
-            action_classifier.compute_loss(logits, source_label, loss_weight=1)
-            action_classifier.backward(retain_graph=False)
-            action_classifier.compute_accuracy(logits, source_label)
+        # print predictions argmax logits
+        #print("Predictions: ", torch.argmax(logits["EMG"], dim=1))
 
-        # update weights and zero gradients if total_batch samples are passed
+        
+        action_classifier.compute_loss(logits, source_label, loss_weight=1)
+        action_classifier.backward(retain_graph=False)
+        action_classifier.compute_accuracy(logits, source_label)
+    
+            # update weights and zero gradients if total_batch samples are passed
         if gradient_accumulation_step:
             logger.info("[%d/%d]\tlast Verb loss: %.4f\tMean verb loss: %.4f\tAcc@1: %.2f%%\tAccMean@1: %.2f%%" %
                         (real_iter, args.train.num_iter, action_classifier.loss.val, action_classifier.loss.avg,
@@ -195,14 +151,6 @@ def train(action_classifier, train_loader, val_loader, device, num_classes):
 
 
 def validate(model, val_loader, device, it, num_classes):
-    """
-    function to validate the model on the test set
-    model: Task containing the model to be tested
-    val_loader: dataloader containing the validation data
-    device: device on which you want to test
-    it: int, iteration among the training num_iter at which the model is tested
-    num_classes: int, number of classes in the classification problem
-    """
     global modalities
 
     model.reset_acc()
@@ -211,18 +159,21 @@ def validate(model, val_loader, device, it, num_classes):
 
     # Iterate over the models
     with torch.no_grad():
-        for i_val, (data, label) in enumerate(val_loader):
+        for i_val, (source_data, label) in enumerate(val_loader):
             label = label.to(device)
+            data = {}
+            data["EMG"] = source_data.to(device)
 
             for m in modalities:
                 batch = data[m].shape[0]
                 logits[m] = torch.zeros((args.test.num_clips, batch, num_classes)).to(device)
 
             clip = {}
+            data["EMG"] = data["EMG"].unsqueeze(1)
             for i_c in range(args.test.num_clips): 
                 for m in modalities:
                     clip[m] = data[m][:, i_c].to(device)
-
+                    
                 output, _ = model(clip)
                 for m in modalities:
                     logits[m][i_c] = output[m]

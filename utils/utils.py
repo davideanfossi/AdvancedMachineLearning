@@ -11,7 +11,6 @@ def get_domains_and_labels(args):
     num_class = num_verbs
     return num_class, valid_labels, source_domain, target_domain
 
-
 class Accuracy(object):
     """Computes and stores the average and current value of different top-k accuracies from the outputs and labels"""
 

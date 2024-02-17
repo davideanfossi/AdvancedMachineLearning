@@ -4,7 +4,7 @@ from utils.logger import logger
 import torch.nn.parallel
 import torch.optim
 import torch
-from utils.loaders import EpicKitchensDataset
+from utils.loaders import ActionEMGDataset
 from utils.args import args
 from utils.utils import pformat_dict
 import utils
@@ -60,9 +60,11 @@ def main():
             case "TransformerClassifier":
                 models[m] = getattr(model_list, args.models[m].model)(num_classes)
             case "LSTM":
-                models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size)
+                models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size) #ToDO: must be edited
             case "MLP":
-                models[m] = getattr(model_list, args.models[m].model)()
+                models[m] = getattr(model_list, args.models[m].model)() #ToDO: must be edited
+            case "ActionNetwork":
+                models[m] = getattr(model_list, args.models[m].model)(num_classes, 16, args.batch_size) #ToDO: must be edited
 
     # the models are wrapped into the ActionRecognition task which manages all the training steps
     action_classifier = tasks.ActionRecognition("action-classifier", models, args.batch_size,      #* Passa alcuni parametri del default.yaml
@@ -79,23 +81,24 @@ def main():
         # notice, here it is multiplied by tot_batch/batch_size since gradient accumulation technique is adopted
         training_iterations = args.train.num_iter * (args.total_batch // args.batch_size)
         # all dataloaders are generated here
-        train_loader = torch.utils.data.DataLoader(EpicKitchensDataset(args.dataset.shift.split("-")[0], modalities, #* prende aggregated_feat_train.pkl
-                                                                       'train', args.dataset, None, None, None,
-                                                                       None, load_feat=True),
-                                                   batch_size=args.batch_size, shuffle=True,
-                                                   num_workers=args.dataset.workers, pin_memory=True, drop_last=True)
+        train_loader = torch.utils.data.DataLoader(
+                ActionEMGDataset(args.dataset.shift.split("-")[0], 'train', args.dataset),
+                batch_size=args.batch_size, shuffle=False, num_workers=args.dataset.workers,
+                pin_memory=True, drop_last=True
+            )
 
-        val_loader = torch.utils.data.DataLoader(EpicKitchensDataset(args.dataset.shift.split("-")[-1], modalities,  #* prende aggregated_feat_test.pkl
-                                                                     'val', args.dataset, None, None, None,
-                                                                     None, load_feat=True),
-                                                 batch_size=args.batch_size, shuffle=False,
-                                                 num_workers=args.dataset.workers, pin_memory=True, drop_last=False)
+        val_loader = torch.utils.data.DataLoader(
+                ActionEMGDataset(args.dataset.shift.split("-")[0], 'val', args.dataset),
+                batch_size=args.batch_size, shuffle=False, num_workers=args.dataset.workers,
+                pin_memory=True, drop_last=True
+            )
+        
         train(action_classifier, train_loader, val_loader, device, num_classes)
 
     elif args.action == "validate":
         if args.resume_from is not None:
             action_classifier.load_last_model(args.resume_from)
-        val_loader = torch.utils.data.DataLoader(EpicKitchensDataset(args.dataset.shift.split("-")[-1], modalities,
+        val_loader = torch.utils.data.DataLoader(ActionEMGDataset(args.dataset.shift.split("-")[-1], modalities,
                                                                      'val', args.dataset, None, None, None,
                                                                      None, load_feat=True),
                                                  batch_size=args.batch_size, shuffle=False,
