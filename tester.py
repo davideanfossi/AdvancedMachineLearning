@@ -58,7 +58,29 @@ if __name__ == "__main__":
 
     # DATA EXTRACTION (Step #3)
     data = get_data_from_pkl_pd("action-net/S04_1")
-    print(data[["description", "start", "stop"]])
+    for i in range(1, len(data)):
+        data_l = int(data["myo_left_timestamps"][i][0])
+        data_r = int(data["myo_right_timestamps"][i][0])
+        data_l_end = int(data["myo_left_timestamps"][i][-1])
+        data_r_end = int(data["myo_right_timestamps"][i][-1])
+        data_start = int(data["start"][i])
+        data_stop = int(data["stop"][i])
+
+        diff_l = data_l_end - data_l
+        diff_r = data_r_end - data_r
+        diff_start = data_start - data_l
+        if diff_l != diff_r or diff_start != 0:
+            print("left start ", data_l)
+            print("right start ",data_r)
+            print("left end ", data_l_end)
+            print("right end ", data_r_end)
+            print("data start ", data_start)
+            print("data stop ", data_stop)
+            print("diff left ", diff_l)
+            print("diff right ", diff_r)
+            print("diff start ", diff_start)
+            print("\n")
+    #print(data[["description", "start", "stop"]])
     #data = get_data_from_pkl_pd("action-net/ActionNet_train")
     #all_columns = data.columns.tolist()
     #print(all_columns)
@@ -71,12 +93,12 @@ if __name__ == "__main__":
     #print(data[['myo_right_timestamps', 'myo_left_timestamps']])
 
     # RGB Action Net Creation
-    df, _ = rgb_action_net_creation("train_val_action_net/D4", "train_val/D4")
-    data = get_data_from_pkl_pd("train_val/D3_train")
+    df, _, df_emg = rgb_action_net_creation("train_val_action_net/D4", "train_val_action_net/D4_reduced", "train_val_action_net/D4_emg")
+    #data = get_data_from_pkl_pd("train_val/D3_train")
     #print(set(data["description"]))
-    print(len(set(data["verb"])))
-    print(df[["video_id", "verb", "start_timestamp", "stop_timestamp", "start_frame", "stop_frame"]])
-    print(len(set(df["uid"])))
+    #print(len(set(data["verb"])))
+    #print(df[["video_id", "verb", "start_timestamp", "stop_timestamp", "start_frame", "stop_frame"]])
+    #print(len(set(df["uid"])))
 
     # HDF5 handler (Step #3)
     # hdf5_handler()
