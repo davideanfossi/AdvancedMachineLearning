@@ -90,7 +90,7 @@ def main():
         val_loader = torch.utils.data.DataLoader(
                 ActionEMGDataset(args.dataset.shift.split("-")[0], 'val', args.dataset),
                 batch_size=args.batch_size, shuffle=False, num_workers=args.dataset.workers,
-                pin_memory=True, drop_last=True
+                pin_memory=True, drop_last=False
             )
         
         train(action_classifier, train_loader, val_loader, device, num_classes)

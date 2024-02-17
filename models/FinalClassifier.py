@@ -148,7 +148,7 @@ class ActionNetwork(nn.Module):
 
     def forward(self, x):
         # x.shape = (32, 100, 16)
-        x = x.reshape(32, 1600)  # (32, 100, 16) -> (32, 1600)
+        x = x.reshape(x.size(0), 1600)  # (32, 100, 16) -> (32, 1600)
         x = x.unsqueeze(1) # (32, 1, 1600)
 
         h0 = torch.zeros(self.num_layers, x.size(0), self.lstm_hidden_size).to(x.device)
@@ -220,7 +220,7 @@ class ActionNetwork_fusion(nn.Module):
 
     def forward(self, x):
         # x.shape = (32, 450, 16)
-        x = x.reshape(32, 7200)  # (32, 100, 16) -> (32, 1600)
+        x = x.reshape(x.size(0), 7200)  # (32, 100, 16) -> (32, 1600)
         x = x.unsqueeze(1) # (32, 1, 1600)
 
         h0 = torch.zeros(self.num_layers, x.size(0), self.lstm_hidden_size).to(x.device)
