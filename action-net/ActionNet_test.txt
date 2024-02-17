@@ -1,0 +1,60 @@
+    index       file                                        description      labels
+4       4  S02_2.pkl                                    Peel a cucumber        Peel
+34     34  S04_1.pkl                  Open/close a jar of almond butter  Open/Close
+48     48  S05_2.pkl                         Clean a plate with a towel       Clean
+4       4  S05_2.pkl                                    Peel a cucumber        Peel
+62     62  S07_1.pkl   Stack on table: 3 each large/small plates, bowls       Stack
+15     15  S06_2.pkl                                Clear cutting board       Clear
+34     34  S05_2.pkl                  Open/close a jar of almond butter  Open/Close
+13     13  S02_2.pkl                                      Peel a potato        Peel
+23     23  S04_1.pkl                                Clear cutting board       Clear
+11     11  S07_1.pkl                                Clear cutting board       Clear
+16     16  S08_1.pkl                                Clear cutting board       Clear
+10     10  S07_1.pkl                                   Slice a cucumber       Slice
+25     25  S05_2.pkl              Spread almond butter on a bread slice      Spread
+46     46  S06_2.pkl                           Clean a pan with a towel       Clean
+26     26  S04_1.pkl              Spread almond butter on a bread slice      Spread
+25     25  S07_1.pkl                                        Slice bread       Slice
+9       9  S08_1.pkl                                Clear cutting board       Clear
+40     40  S09_2.pkl                      Spread jelly on a bread slice      Spread
+47     47  S08_1.pkl  Get/replace items from refrigerator/cabinets/d...     Get/Put
+24     24  S03_2.pkl                        Clean a plate with a sponge       Clean
+20     20  S06_2.pkl              Spread almond butter on a bread slice      Spread
+37     37  S03_2.pkl  Get items from cabinets: 3 each large/small pl...     Get/Put
+59     59  S05_2.pkl  Load dishwasher: 3 each large/small plates, bo...        Load
+17     17  S03_2.pkl             Pour water from a pitcher into a glass        Pour
+39     39  S09_2.pkl                      Spread jelly on a bread slice      Spread
+23     23  S07_1.pkl  Get/replace items from refrigerator/cabinets/d...     Get/Put
+34     34  S09_2.pkl  Get/replace items from refrigerator/cabinets/d...     Get/Put
+56     56  S04_1.pkl  Set table: 3 each large/small plates, bowls, m...         Set
+59     59  S09_2.pkl                         Clean a plate with a towel       Clean
+40     40  S00_2.pkl                         Clean a plate with a towel       Clean
+37     37  S05_2.pkl             Pour water from a pitcher into a glass        Pour
+52     52  S00_2.pkl  Unload dishwasher: 3 each large/small plates, ...      Unload
+16     16  S07_1.pkl                                Clear cutting board       Clear
+12     12  S02_2.pkl                                      Peel a potato        Peel
+24     24  S06_2.pkl                      Spread jelly on a bread slice      Spread
+35     35  S06_2.pkl             Pour water from a pitcher into a glass        Pour
+11     11  S03_1.pkl       Get items from refrigerator/cabinets/drawers     Get/Put
+45     45  S04_1.pkl                         Clean a plate with a towel       Clean
+52     52  S04_1.pkl                           Clean a pan with a towel       Clean
+18     18  S03_2.pkl             Pour water from a pitcher into a glass        Pour
+25     25  S03_1.pkl       Get items from refrigerator/cabinets/drawers     Get/Put
+10     10  S09_2.pkl                                   Slice a cucumber       Slice
+22     22  S09_2.pkl                                Clear cutting board       Clear
+20     20  S02_2.pkl                                        Slice bread       Slice
+56     56  S05_2.pkl  Get items from cabinets: 3 each large/small pl...     Get/Put
+11     11  S06_1.pkl                                Clear cutting board       Clear
+4       4  S08_1.pkl                                    Peel a cucumber        Peel
+20     20  S07_1.pkl                                     Slice a potato       Slice
+10     10  S03_2.pkl                  Open/close a jar of almond butter  Open/Close
+36     36  S04_1.pkl             Pour water from a pitcher into a glass        Pour
+47     47  S07_1.pkl                        Clean a plate with a sponge       Clean
+47     47  S04_1.pkl                         Clean a plate with a towel       Clean
+14     14  S06_2.pkl                                        Slice bread       Slice
+12     12  S02_3.pkl                        Clean a plate with a sponge       Clean
+54     54  S08_1.pkl  Get/replace items from refrigerator/cabinets/d...     Get/Put
+17     17  S05_2.pkl                                     Slice a potato       Slice
+54     54  S05_2.pkl                           Clean a pan with a towel       Clean
+7       7  S06_2.pkl                                     Slice a potato       Slice
+13     13  S07_1.pkl                                      Peel a potato        Peel

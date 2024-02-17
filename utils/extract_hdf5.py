@@ -46,7 +46,7 @@ class HDF5Extractor:
         self.stream = stream
         self.h5_file = h5py.File(in_path, "r")
 
-    def extract_hdf5(self, save=False):
+    def extract_hdf5(self, save=False, label_index=0):
         self.save = save
 
         match self.mode:
@@ -54,8 +54,8 @@ class HDF5Extractor:
                 self.extract_sensor_data()
             case "label":
                 self.extract_label_data()
-            case "sensor_label":
-                self.extract_sensor_data_for_one_label()
+            case "sensor-label":
+                self.extract_sensor_data_for_one_label(index=label_index)
             case "resample":
                 self.resample_sensor_data()
 
@@ -202,7 +202,7 @@ class HDF5Extractor:
             with open(f"{self.out_folder}/activities_end_times_s.txt", "w") as txt_file:
                 txt_file.write(str(activities_end_times_s))
 
-    def extract_sensor_data_for_one_label(self):
+    def extract_sensor_data_for_one_label(self, index=0):
         ####################################################
         # Example of getting sensor data for a label.
         ####################################################
@@ -222,7 +222,7 @@ class HDF5Extractor:
         )
 
         # Get EMG data for the first instance of the second label.
-        target_label = activities_labels[1]
+        target_label = activities_labels[index]
         target_label_instance = 0
 
         # Find the start/end times associated with all instances of this label.

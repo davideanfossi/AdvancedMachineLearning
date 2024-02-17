@@ -1,14 +1,14 @@
 action: save # train or test
 name: saved_feat_I3D
 split: train
-#resume_from: /content/saved_models/I3D_SourceOnlyD1 # Comment in order to not use checkpoints
+resume_from: /content/saved_models/I3D_SourceOnlyD3
 
 save:
   num_clips: 5
   dense_sampling:
     RGB: True
   num_frames_per_clip:
-    RGB: 5   # 5, 10, 25
+    RGB: 16
 
 dataset:
   annotations_path: train_val
@@ -16,6 +16,7 @@ dataset:
   workers: 2 #4
   stride: 2
   resolution: 224
+  num_classes: 8
   RGB:
     data_path: ???
     tmpl: "img_{:010d}.jpg"
@@ -35,5 +36,4 @@ models:
     sgd_momentum: 0.9
     weight_decay: 1e-7
     weight_i3d_rgb: './pretrained_i3d/rgb_imagenet.pt'
-
 
