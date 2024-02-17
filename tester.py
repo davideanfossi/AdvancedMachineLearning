@@ -57,6 +57,7 @@ if __name__ == "__main__":
     # extract_pkl(pkl_folder)
 
     # DATA EXTRACTION (Step #3)
+    """
     data = get_data_from_pkl_pd("action-net/S04_1")
     for i in range(1, len(data)):
         data_l = int(data["myo_left_timestamps"][i][0])
@@ -79,7 +80,7 @@ if __name__ == "__main__":
             print("diff left ", diff_l)
             print("diff right ", diff_r)
             print("diff start ", diff_start)
-            print("\n")
+            print("\n")"""
     #print(data[["description", "start", "stop"]])
     #data = get_data_from_pkl_pd("action-net/ActionNet_train")
     #all_columns = data.columns.tolist()
@@ -93,7 +94,7 @@ if __name__ == "__main__":
     #print(data[['myo_right_timestamps', 'myo_left_timestamps']])
 
     # RGB Action Net Creation
-    df, _, df_emg = rgb_action_net_creation("train_val_action_net/D4", "train_val_action_net/D4_reduced", "train_val_action_net/D4_emg")
+    #df, _, df_emg = rgb_action_net_creation("train_val_action_net/D4", "train_val_action_net/D4_reduced", "train_val_action_net/D4_emg")
     #data = get_data_from_pkl_pd("train_val/D3_train")
     #print(set(data["description"]))
     #print(len(set(data["verb"])))
