@@ -62,7 +62,7 @@ def main():
             case "LSTM":
                 models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size) #ToDO: must be edited
             case "MLP":
-                models[m] = getattr(model_list, args.models[m].model)() #ToDO: must be edited
+                models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size) #ToDO: must be edited
             case "ActionNetwork":
                 models[m] = getattr(model_list, args.models[m].model)(num_classes, 16, args.batch_size) #ToDO: must be edited
 

@@ -252,6 +252,93 @@ class EpicKitchensDataset(data.Dataset, ABC):
     def __len__(self):
         return len(self.video_list)
 
+class ActionNetDataset(data.Dataset, ABC):
+    def __init__(self, mode, dataset_conf):
+        self.mode = mode  # 'train', 'val' or 'test'
+        self.dataset_conf = dataset_conf
+
+        if self.mode == "train":
+            pickle_name_emg = "D4_emg_train.pkl"
+            pickle_name_rbg = "feature_extracted_D4_train.pkl"
+        else:
+            pickle_name_emg = "D4_emg_test.pkl"           
+            pickle_name_rbg = "feature_extracted_D4_test.pkl"
+
+        self.list_file_emg = pd.read_pickle(os.path.join(self.dataset_conf.annotations_path, pickle_name_emg))
+        self.emg_list = [ActionEMGRecord(tup, self.dataset_conf) for tup in self.list_file_emg.iterrows()]
+
+        self.list_rgb = pd.read_pickle(os.path.join(self.dataset_conf.annotations_path, pickle_name_rbg))["features"]
+
+
+    def _preprocess(self, readings):
+        #* apply preprocessing to the EMG data
+
+        #* Rectification
+        # abs value
+        readings_rectified = np.abs(readings)
+        #* low-pass Filter
+        # Frequenza di campionamento (Hz)
+        fs = 160  # Frequenza dei sampling data da loro
+        f_cutoff = 5  # Frequenza di taglio
+
+        # Ordine del filtro
+        order = 4 
+        # Calcolo dei coefficienti del filtro
+        b, a = butter(order, f_cutoff / (fs / 2), btype='low')
+        # Concateno tutti i vettori in un'unica matrice
+        readings_filtered = np.zeros_like(readings_rectified, dtype=float)
+        for i in range(8):  # 8 colonne
+            readings_filtered[:, i] = filtfilt(b, a, readings_rectified[:, i])
+
+        #print(readings_rectified[:6], readings_rectified.shape)
+        #print(readings_filtered[:6], readings_filtered.shape)
+        # exit()
+
+        # convert to tensor
+        readings_filtered = torch.tensor(readings_filtered, dtype=torch.float32)
+        
+        min_val, _ = torch.min(readings_filtered, dim=1, keepdim=True)
+        max_val, _ = torch.max(readings_filtered, dim=1, keepdim=True)
+
+        g = max_val - min_val + 0.0001
+
+        # # Normalize the data to the range -1 to 1
+        normalized_data = 2 * (readings_filtered - min_val) / g - 1
+
+        #print(normalized_data[:6], normalized_data.shape)
+
+
+        return normalized_data
+
+    def __getitem__(self, index):
+        # record is a row of the pkl file containing one sample/action
+        # notice that it is already converted into a EpicVideoRecord object so that here you can access
+        # all the properties of the sample easily
+
+        # get EMG sample
+        record_emg = self.emg_list[index]
+        left_readings = self._preprocess(record_emg.myo_left_readings[:450]) #TODO: fix this
+        right_readings = self._preprocess(record_emg.myo_right_readings[:450])
+        sample = (np.concatenate((left_readings, right_readings), axis=1))
+        sample = torch.tensor(sample, dtype=torch.float32)
+        # (750, 16)
+
+        # get RGB sample
+        record_rgb = self.list_rgb[index]
+        features = record_rgb["features_RGB"]
+        features = torch.tensor(features, dtype=torch.float32)
+        # (1024)
+
+        # get label
+        label = record_emg.label
+        label = torch.tensor(label)
+
+        dict = {"EMG": sample.unsqueeze(0), "RGB": features}
+        return dict, label
+    
+    def __len__(self):
+        return len(self.emg_list)
+
 
 class ActionEMGDataset(data.Dataset, ABC):
     def __init__(self, split, mode, dataset_conf, additional_info=False):

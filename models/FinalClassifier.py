@@ -172,3 +172,75 @@ class ActionNetwork(nn.Module):
         #print(out.shape, out2.shape, out3.shape, logits.shape)
 
         return logits, {"features": feat}
+    
+
+class ActionNetwork_fusion(nn.Module):
+    def __init__(self, num_classes, batch_size): #* aggiusta i parametri, ad es. passa la batch come arg
+        super(ActionNetwork_fusion, self).__init__()
+        self.input_size = 7200 # input_size
+        self.lstm_hidden_size = 3000
+        self.lstm2_hidden_size = 50
+        self.num_layers = 1
+        self.batch_size = batch_size
+        self.lstm = nn.LSTM(self.input_size, self.lstm_hidden_size, self.num_layers, 
+                            bias=True, batch_first=True, dropout=0, bidirectional=False, 
+                            proj_size=0, device=None, dtype=None)
+        self.lstm2 = nn.LSTM(self.lstm_hidden_size, self.lstm2_hidden_size, self.num_layers, 
+                            bias=True, batch_first=True, dropout=0, bidirectional=False, 
+                            proj_size=0, device=None, dtype=None)
+        
+        self.dropout = nn.Dropout(p=0.2, inplace=False)
+        self.fc1 = nn.Linear(50, num_classes)
+        self.fc2 = nn.Linear(num_classes, num_classes)
+
+    def forward_old(self, x):
+        # x.shape = (32, 100, 16)
+
+        h0 = torch.zeros(self.num_layers, x.size(0), self.lstm_hidden_size).to(x.device)
+        c0 = torch.zeros(self.num_layers, x.size(0), self.lstm_hidden_size).to(x.device)
+
+        out, _ = self.lstm(x, (h0, c0)) # (32, 100, 5)
+
+        h02 = torch.zeros(self.num_layers, out.size(0), self.lstm2_hidden_size).to(x.device)
+        c02 = torch.zeros(self.num_layers, out.size(0), self.lstm2_hidden_size).to(x.device)
+
+        out2, _ = self.lstm2(out, (h02, c02)) # (32, 100, 1)
+        out2 = out2.squeeze(2)  # (32, 100)
+        
+        #out3 = self.dropout(out2) 
+
+        #logits = self.fc2(torch.relu(self.fc1(out2)))  #(32, 20)
+        logits = self.fc1(out2)  # (32, 20)
+
+        #* SoftMax
+        predicted_activity = torch.argmax(F.softmax(logits, dim=1), dim=1)
+        #print(out.shape, out2.shape, out3.shape, logits.shape)
+
+        return logits, {"features": out2}
+
+    def forward(self, x):
+        # x.shape = (32, 450, 16)
+        x = x.reshape(32, 7200)  # (32, 100, 16) -> (32, 1600)
+        x = x.unsqueeze(1) # (32, 1, 1600)
+
+        h0 = torch.zeros(self.num_layers, x.size(0), self.lstm_hidden_size).to(x.device)
+        c0 = torch.zeros(self.num_layers, x.size(0), self.lstm_hidden_size).to(x.device)
+
+        out, _ = self.lstm(x, (h0, c0)) # (32, 1, 800)
+
+        h02 = torch.zeros(self.num_layers, out.size(0), self.lstm2_hidden_size).to(x.device)
+        c02 = torch.zeros(self.num_layers, out.size(0), self.lstm2_hidden_size).to(x.device)
+
+        out2, _ = self.lstm2(out, (h02, c02)) # (32, 1, 50)
+        
+        out3 = self.dropout(out2)  
+
+        feat = out3.view(-1, self.lstm2_hidden_size) # (32, 50)
+        logits = self.fc2(torch.relu(self.fc1(feat)))  # (32, 20)
+        #logits = self.fc1(feat)  # (32, 20)
+
+        #* SoftMax
+        predicted_activity = torch.argmax(F.softmax(logits, dim=1), dim=1)
+        #print(out.shape, out2.shape, out3.shape, logits.shape)
+
+        return logits, {"features": feat}
