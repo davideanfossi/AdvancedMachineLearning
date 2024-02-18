@@ -12,4 +12,3 @@ train_val/big_file_test.pkl
 train_val/big_file_train.pkl
 train_val/big_file_test_100x16.pkl
 train_val/big_file_train_100x16.pkl
-action-net/pickles
