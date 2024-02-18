@@ -99,8 +99,7 @@ def compute_spectrogram(readings):
 
     signal = [[float(x) for x in record] for record in readings]
     signal = torch.tensor(signal, dtype=torch.float32)
-    freq_signal = [spectrogram(signal[:, j]) for j in range(16)]
-    freq_signal = (freq_signal)
+    freq_signal = torch.stack([spectrogram(signal[:, j]) for j in range(16)])
 
     return freq_signal
 

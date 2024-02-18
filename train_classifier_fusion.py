@@ -67,6 +67,8 @@ def main():
                 models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size) #ToDO: must be edited
             case "ActionNetwork":
                 models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size) #ToDO: must be edited
+            case "ActionNetwork_Conv":
+                models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size) #ToDO: must be edited
 
     # the models are wrapped into the ActionRecognition task which manages all the training steps
     action_classifier = tasks.ActionRecognition("action-classifier", models, args.batch_size,      #* Passa alcuni parametri del default.yaml

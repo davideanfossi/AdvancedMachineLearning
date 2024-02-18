@@ -317,8 +317,8 @@ class ActionNetDataset(data.Dataset, ABC):
 
         # get EMG sample
         record_emg = self.emg_list[index]
-        left_readings = self._preprocess(record_emg.myo_left_readings[:450]) #TODO: fix this
-        right_readings = self._preprocess(record_emg.myo_right_readings[:450])
+        left_readings = self._preprocess(record_emg.myo_left_readings) #TODO: fix this
+        right_readings = self._preprocess(record_emg.myo_right_readings)
         sample = (np.concatenate((left_readings, right_readings), axis=1))
         sample = torch.tensor(sample, dtype=torch.float32)
         # (750, 16)
