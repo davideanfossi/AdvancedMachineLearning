@@ -103,11 +103,11 @@ class TransformerClassifier(nn.Module):
         return logits, {"features": feat}
     
 class ActionNetwork(nn.Module):
-    def __init__(self, num_classes, input_size, batch_size): #* aggiusta i parametri, ad es. passa la batch come arg
+    def __init__(self, num_classes, batch_size): #* aggiusta i parametri, ad es. passa la batch come arg
         super(ActionNetwork, self).__init__()
-        self.input_size = 1600 # input_size
-        self.lstm_hidden_size = 800
-        self.lstm2_hidden_size = 50
+        self.input_size = 12000 # input_size
+        self.lstm_hidden_size = 4096
+        self.lstm2_hidden_size = 1024
         self.num_layers = 1
         self.batch_size = batch_size
         self.lstm = nn.LSTM(self.input_size, self.lstm_hidden_size, self.num_layers, 
@@ -118,8 +118,8 @@ class ActionNetwork(nn.Module):
                             proj_size=0, device=None, dtype=None)
         
         self.dropout = nn.Dropout(p=0.2, inplace=False)
-        self.fc1 = nn.Linear(50, num_classes)
-        self.fc2 = nn.Linear(num_classes, num_classes)
+        self.fc1 = nn.Linear(1024, 512)
+        self.fc2 = nn.Linear(512, num_classes)
 
     def forward_old(self, x):
         # x.shape = (32, 100, 16)
@@ -147,8 +147,8 @@ class ActionNetwork(nn.Module):
         return logits, {"features": out2}
 
     def forward(self, x):
-        # x.shape = (32, 100, 16)
-        x = x.reshape(x.size(0), 1600)  # (32, 100, 16) -> (32, 1600)
+        # x.shape = (32, 750, 16)
+        x = x.reshape(x.size(0), 12000)  # (32, 100, 16) -> (32, 1600)
         x = x.unsqueeze(1) # (32, 1, 1600)
 
         h0 = torch.zeros(self.num_layers, x.size(0), self.lstm_hidden_size).to(x.device)

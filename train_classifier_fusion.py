@@ -65,6 +65,8 @@ def main():
                 models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size)
             case "ActionNetwork_fusion":
                 models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size) #ToDO: must be edited
+            case "ActionNetwork":
+                models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size) #ToDO: must be edited
 
     # the models are wrapped into the ActionRecognition task which manages all the training steps
     action_classifier = tasks.ActionRecognition("action-classifier", models, args.batch_size,      #* Passa alcuni parametri del default.yaml
@@ -119,7 +121,7 @@ def train(action_classifier, train_loader, val_loader, device, num_classes):
 
     # the batch size should be total_batch but batch accumulation is done with batch size = batch_size.
     # real_iter is the number of iterations if the batch size was really total_batch
-    for i in range(iteration, training_iterations):
+    for i in range(int(iteration), training_iterations):
         # iteration w.r.t. the paper (w.r.t the bs to simulate).... i is the iteration with the actual bs( < tot_bs)
         real_iter = (i + 1) / (args.total_batch // args.batch_size)
         if real_iter == args.train.lr_steps:
