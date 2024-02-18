@@ -49,14 +49,13 @@ class HDF5Extractor:
     def extract_hdf5(self, save=False, label_index=0):
         self.save = save
 
-        match self.mode:
-            case "sensor":
+        if self.mode == "sensor":
                 self.extract_sensor_data()
-            case "label":
+        elif self.mode == "label":
                 self.extract_label_data()
-            case "sensor-label":
+        elif self.mode == "sensor-label":
                 self.extract_sensor_data_for_one_label(index=label_index)
-            case "resample":
+        elif self.mode == "resample":
                 self.resample_sensor_data()
 
     def get_sensor_data(self, device_name, stream_name):

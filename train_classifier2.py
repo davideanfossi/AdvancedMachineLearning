@@ -56,15 +56,14 @@ def main():
         logger.info('{} Net\tModality: {}'.format(args.models[m].model, m)) #* args.models[m].model è uguale a Classifier
         # notice that here, the first parameter passed is the input dimension
         # In our case it represents the feature dimensionality which is equivalent to 1024 for I3D
-        match args.models[m].model:
-            case "TransformerClassifier":
-                models[m] = getattr(model_list, args.models[m].model)(num_classes)
-            case "LSTM":
-                models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size) #ToDO: must be edited
-            case "MLP":
-                models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size) #ToDO: must be edited
-            case "ActionNetwork":
-                models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size) #ToDO: must be edited
+        if args.models[m].model == "TransformerClassifier":
+            models[m] = getattr(model_list, args.models[m].model)(num_classes)
+        elif args.models[m].model == "LSTM":
+            models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size) #ToDO: must be edited
+        elif args.models[m].model == "MLP":
+            models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size) #ToDO: must be edited
+        elif args.models[m].model == "ActionNetwork":
+            models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size) #ToDO: must be edited
 
     # the models are wrapped into the ActionRecognition task which manages all the training steps
     action_classifier = tasks.ActionRecognition("action-classifier", models, args.batch_size,      #* Passa alcuni parametri del default.yaml
