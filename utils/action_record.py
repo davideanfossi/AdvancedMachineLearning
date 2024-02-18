@@ -1,6 +1,6 @@
 class ActionEMGRecord(object):
     def __init__(self, tup, dataset_conf):
-        self._series = tup[1]
+        self._series = tup
         self.dataset_conf = dataset_conf
 
     @property

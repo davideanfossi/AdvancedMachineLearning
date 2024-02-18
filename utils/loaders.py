@@ -265,7 +265,7 @@ class ActionNetDataset(data.Dataset, ABC):
             pickle_name_rbg = "feature_extracted_D4_test.pkl"
 
         self.list_file_emg = pd.read_pickle(os.path.join(self.dataset_conf.annotations_path, pickle_name_emg))
-        self.emg_list = [ActionEMGRecord(tup, self.dataset_conf) for tup in self.list_file_emg.iterrows()]
+        self.emg_list = [ActionEMGRecord(tup[1], self.dataset_conf) for tup in self.list_file_emg.iterrows()]
 
         self.list_rgb = pd.read_pickle(os.path.join(self.dataset_conf.annotations_path, pickle_name_rbg))["features"]
 
