@@ -29,7 +29,7 @@ def save_into_big_pkl(action_net_path, big_file_path, label_dict):
         # get readings and timestamps from the file
         Spkl = get_data_from_pkl_pd("readings/" + file.strip(".pkl"))
         right_readings = Spkl.myo_right_readings[index]
-        left_readings = Spkl.myo_left_readings[index]  
+        left_readings = Spkl.myo_left_readings[index]
   
         # separate the readings into bloks of 100 and truncate longer readings 
         minimum = min(len(right_readings), len(left_readings))
