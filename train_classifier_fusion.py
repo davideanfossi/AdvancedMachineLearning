@@ -192,7 +192,8 @@ def train(action_classifier, train_loader, val_loader, device, num_classes):
                 action_classifier.best_iter = real_iter
                 action_classifier.best_iter_score = val_metrics['top1']
 
-            action_classifier.save_model(real_iter, val_metrics['top1'], prefix=None)
+            if real_iter == training_iterations:
+                action_classifier.save_model(real_iter, val_metrics['top1'], prefix=None)
             action_classifier.train(True)
 
 
