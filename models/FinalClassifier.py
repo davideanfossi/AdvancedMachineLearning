@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
 import torch.nn.functional as F
-
+from utils.spec_emg import compute_spectrogram
 
 class MLP(nn.Module):
     def __init__(self, num_classes, batch_size): # 1024, 8
@@ -97,6 +97,7 @@ class ActionNetwork(nn.Module):
         self.lstm2_hidden_size = 1024
         self.num_layers = 1
         self.batch_size = batch_size
+        self.conv_layer = nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(1, 3))
         self.lstm = nn.LSTM(self.input_size, self.lstm_hidden_size, self.num_layers, 
                             bias=True, batch_first=True, dropout=0, bidirectional=False, 
                             proj_size=0, device=None, dtype=None)
@@ -135,6 +136,16 @@ class ActionNetwork(nn.Module):
 
     def forward(self, x):
         # x.shape = (32, 750, 16)
+        for i in range(x.size(0)):
+            x[i] = compute_spectrogram(x[i])
+        print(x.shape)
+        exit()
+        x = torch.transpose(x, 1, 2)
+        print(x.shape)
+        x = self.conv_layer(x)
+        print(x.shape)
+        exit()
+        
         x = x.reshape(x.size(0), 12000)  # (32, 100, 16) -> (32, 1600)
         x = x.unsqueeze(1) # (32, 1, 1600)
 
