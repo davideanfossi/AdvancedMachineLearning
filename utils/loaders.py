@@ -336,9 +336,6 @@ class ActionNetDataset(data.Dataset, ABC):
             sample = (np.concatenate((left_readings, right_readings), axis=1))
         sample = torch.tensor(sample, dtype=torch.float32)
 
-        print(sample.shape)
-        exit()
-
         # get RGB sample
         record_rgb = self.list_rgb[index]
         features = record_rgb["features_RGB"]
