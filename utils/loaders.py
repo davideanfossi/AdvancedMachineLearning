@@ -339,7 +339,6 @@ class ActionNetDataset(data.Dataset, ABC):
     def __len__(self):
         return len(self.emg_list)
 
-
 class ActionEMGDataset(data.Dataset, ABC):
     def __init__(self, split, mode, dataset_conf, additional_info=False):
         self.mode = mode  # 'train', 'val' or 'test'
