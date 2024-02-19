@@ -132,12 +132,13 @@ if __name__ == "__main__":
     # BIG FILE WITH PREPROCESSED DATA AND SPRECTROGRAM
     emg_dataset_spettrogram("action-net/ActionNet_train", "train_val/big_file_train_spe.pkl")
     emg_dataset_spettrogram("action-net/ActionNet_test", "train_val/big_file_test_spe.pkl")
-    data = get_data_from_pkl_pd("train_val/big_file_train_spe")
-    data = pd.DataFrame(data["features"])
-    print(data.head(), "\n")
-    data = get_data_from_pkl_pd("train_val/big_file_test_spe")
-    data = pd.DataFrame(data["features"])
-    print(data.head())
+    #data = get_data_from_pkl_pd("train_val/big_file_train_spe")
+    #data = pd.DataFrame(data["features"])
+    #print(data["features"][0]["right_readings"].shape, "\n")
+    
+    #data = get_data_from_pkl_pd("train_val/big_file_test_spe")
+    #data = pd.DataFrame(data["features"])
+    #print(data.head())
 
 
     # HDF5 handler (Step #3)

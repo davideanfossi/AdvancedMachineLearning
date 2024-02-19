@@ -340,7 +340,7 @@ class ActionNetDataset(data.Dataset, ABC):
         return len(self.emg_list)
 
 class ActionEMGDataset(data.Dataset, ABC):
-    def __init__(self, split, mode, dataset_conf, additional_info=False):
+    def __init__(self, split, mode, dataset_conf, additional_info=False, conv=False):
         self.mode = mode  # 'train', 'val' or 'test'
         self.dataset_conf = dataset_conf
         self.stride = self.dataset_conf.stride
@@ -348,11 +348,18 @@ class ActionEMGDataset(data.Dataset, ABC):
         self.max_length = 0
         self.max_length_left = 0
         self.max_length_right = 0
+        self.conv = conv
 
-        if self.mode == "train":
-            pickle_name = "big_file" + "_train.pkl"
+        if self.conv:
+            if self.mode == "train":
+                pickle_name = "big_file_train_spe.pkl"
+            else:
+                pickle_name = "big_file_test_spe.pkl"
         else:
-            pickle_name = "big_file" + "_test.pkl"
+            if self.mode == "train":
+                pickle_name = "big_file_train.pkl"
+            else:
+                pickle_name = "big_file_test.pkl"
 
         self.list_file = pd.read_pickle(os.path.join(self.dataset_conf.annotations_path, pickle_name))
         self.emg_list = [ActionEMGRecord(tup, self.dataset_conf) for tup in self.list_file["features"]]
@@ -404,9 +411,16 @@ class ActionEMGDataset(data.Dataset, ABC):
         # all the properties of the sample easily
 
         record = self.emg_list[index]
-        left_readings = self._preprocess(record.myo_left_readings)
-        right_readings = self._preprocess(record.myo_right_readings)
-        sample = (np.concatenate((left_readings, right_readings), axis=1))
+
+        if self.conv:
+            left_readings = record.myo_left_readings
+            right_readings = record.myo_right_readings
+            sample = (np.concatenate((left_readings, right_readings), axis=0))
+        else:
+            left_readings = self._preprocess(record.myo_left_readings)
+            right_readings = self._preprocess(record.myo_right_readings)
+            sample = (np.concatenate((left_readings, right_readings), axis=1))
+
         sample = torch.tensor(sample, dtype=torch.float32)
         label = torch.tensor(record.label)
         out = {"EMG": sample.unsqueeze(0)} 
@@ -414,3 +428,4 @@ class ActionEMGDataset(data.Dataset, ABC):
     
     def __len__(self):
         return len(self.emg_list)
+

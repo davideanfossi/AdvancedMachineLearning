@@ -10,5 +10,7 @@ models/D1
 readings
 train_val/big_file_test.pkl
 train_val/big_file_train.pkl
+train_val/big_file_test_spe.pkl
+train_val/big_file_train_spe.pkl
 train_val/big_file_test_100x16.pkl
 train_val/big_file_train_100x16.pkl

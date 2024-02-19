@@ -297,7 +297,7 @@ def preprocess(readings):
 def emg_dataset_spettrogram(path, out_path):
     actionNet_train = get_data_from_pkl_pd(path)
     data = {"features": []}
-    dataset_emg = []
+    dataset_final = []
     uid_offset = 0
     first_frame = 0
 
@@ -305,6 +305,8 @@ def emg_dataset_spettrogram(path, out_path):
         index = actionNet_train.index[i]
         file = actionNet_train.iloc[i].file
         label = actionNet_train.iloc[i].description
+        dataset_emg = []
+        dataset_spect = []
 
         file_pkl = get_data_from_pkl_pd("action-net/pickles/" + file.strip(".pkl"))
         row = file_pkl.loc[index]
@@ -341,7 +343,6 @@ def emg_dataset_spettrogram(path, out_path):
                 readings = np.concatenate((readings, new_rows), axis=0)
             dataset_emg[k]["left_readings"] = preprocess(readings)
 
-        dataset_spect = []
         for k in range(len(dataset_emg)):
             dataset_spect.append(
                 {
@@ -351,10 +352,11 @@ def emg_dataset_spettrogram(path, out_path):
                     "label": dataset_emg[k]["label"],
                 }
             )
+        dataset_final.extend(dataset_spect)
 
         print(f"Spectogramm: {i}/{len(actionNet_train)}")
         
-    data["features"] = dataset_spect
+    data["features"] = dataset_final
     with open(out_path, "wb") as file:
         pickle.dump(data, file)
 
