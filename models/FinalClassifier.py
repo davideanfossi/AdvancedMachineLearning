@@ -136,6 +136,7 @@ class ActionNetwork(nn.Module):
 
         return logits, {"features": feat}
     
+    
 class ActionNetwork_Conv(nn.Module):
     def __init__(self, num_classes, batch_size): #* aggiusta i parametri, ad es. passa la batch come arg
         super(ActionNetwork_Conv, self).__init__()
@@ -159,12 +160,6 @@ class ActionNetwork_Conv(nn.Module):
 
     def forward(self, x):
         # x.shape = (32, 750, 16)
-
-        #* start conv and spectrogram
-        # a = []
-        # for i in range(x.size(0)):
-        #      a.append(compute_spectrogram(x[i]))
-        # x = torch.stack(a).to("cuda") # (32, 16, 17, 188)
 
         x = self.conv_layer(x)
         x = x.reshape(x.size(0), x.size(1)*x.size(2)*x.size(3))  # (32, 100, 16) -> (32, 1600)
