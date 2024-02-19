@@ -66,12 +66,13 @@ if __name__ == "__main__":
     #print(data[['myo_right_timestamps', 'myo_left_timestamps']])
 
     # RGB Action Net Creation
-    #df, _, df_emg = rgb_action_net_creation("train_val_action_net/D4", "train_val/D4", "train_val_action_net/D4_emg")
+    #df, _, df_emg = rgb_action_net_creation(None, None, "train_val_action_net/D4_emg_spe")
+
     
    #df = get_data_from_pkl_pd("train_val_action_net/D4_train")
-   #df_emg = get_data_from_pkl_pd("train_val_action_net/D4_emg_train")
+    df_emg = get_data_from_pkl_pd("train_val_action_net/D4_emg_spe_train")
    #print(df.head(), "\n")
-   #print(df_emg.head(), "\n")
+    print(df_emg.right_readings[0].shape, "\n")
    #print(len(df_emg.right_readings[0]), "\n")
     
     #data = get_data_from_pkl_pd("train_val/D3_train")
@@ -130,8 +131,8 @@ if __name__ == "__main__":
 
 
     # BIG FILE WITH PREPROCESSED DATA AND SPRECTROGRAM
-    emg_dataset_spettrogram("action-net/ActionNet_train", "train_val/big_file_train_spe.pkl")
-    emg_dataset_spettrogram("action-net/ActionNet_test", "train_val/big_file_test_spe.pkl")
+    #emg_dataset_spettrogram("action-net/ActionNet_train", "train_val/big_file_train_spe.pkl")
+    #emg_dataset_spettrogram("action-net/ActionNet_test", "train_val/big_file_test_spe.pkl")
     #data = get_data_from_pkl_pd("train_val/big_file_train_spe")
     #data = pd.DataFrame(data["features"])
     #print(data["features"][0]["right_readings"].shape, "\n")
@@ -139,7 +140,6 @@ if __name__ == "__main__":
     #data = get_data_from_pkl_pd("train_val/big_file_test_spe")
     #data = pd.DataFrame(data["features"])
     #print(data.head())
-
 
     # HDF5 handler (Step #3)
     # hdf5_handler()

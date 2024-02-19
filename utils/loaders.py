@@ -253,16 +253,25 @@ class EpicKitchensDataset(data.Dataset, ABC):
         return len(self.video_list)
 
 class ActionNetDataset(data.Dataset, ABC):
-    def __init__(self, mode, dataset_conf):
+    def __init__(self, mode, dataset_conf, conv=True):
         self.mode = mode  # 'train', 'val' or 'test'
         self.dataset_conf = dataset_conf
+        self.conv = conv
 
-        if self.mode == "train":
-            pickle_name_emg = "D4_emg_train.pkl"
-            pickle_name_rbg = "feature_extracted_D4_train.pkl"
+        if self.conv:
+            if self.mode == "train":
+                pickle_name_emg = "D4_emg_spe_train.pkl"
+                pickle_name_rbg = "feature_extracted_D4_train.pkl"
+            else:
+                pickle_name_emg = "D4_emg_spe_test.pkl"           
+                pickle_name_rbg = "feature_extracted_D4_test.pkl"
         else:
-            pickle_name_emg = "D4_emg_test.pkl"           
-            pickle_name_rbg = "feature_extracted_D4_test.pkl"
+            if self.mode == "train":
+                pickle_name_emg = "D4_emg_train.pkl"
+                pickle_name_rbg = "feature_extracted_D4_train.pkl"
+            else:
+                pickle_name_emg = "D4_emg_test.pkl"           
+                pickle_name_rbg = "feature_extracted_D4_test.pkl"
 
         self.list_file_emg = pd.read_pickle(os.path.join(self.dataset_conf.annotations_path, pickle_name_emg))
         self.emg_list = [ActionEMGRecord(tup[1], self.dataset_conf) for tup in self.list_file_emg.iterrows()]
@@ -317,11 +326,18 @@ class ActionNetDataset(data.Dataset, ABC):
 
         # get EMG sample
         record_emg = self.emg_list[index]
-        left_readings = self._preprocess(record_emg.myo_left_readings) #TODO: fix this
-        right_readings = self._preprocess(record_emg.myo_right_readings)
-        sample = (np.concatenate((left_readings, right_readings), axis=1))
+        if self.conv:
+            left_readings = record_emg.myo_left_readings
+            right_readings = record_emg.myo_right_readings
+            sample = (np.concatenate((left_readings, right_readings), axis=0))
+        else:
+            left_readings = self._preprocess(record_emg.myo_left_readings) 
+            right_readings = self._preprocess(record_emg.myo_right_readings)
+            sample = (np.concatenate((left_readings, right_readings), axis=1))
         sample = torch.tensor(sample, dtype=torch.float32)
-        # (750, 16)
+
+        print(sample.shape)
+        exit()
 
         # get RGB sample
         record_rgb = self.list_rgb[index]

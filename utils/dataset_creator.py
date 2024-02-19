@@ -421,6 +421,7 @@ def rgb_action_net_creation(out_path=None, out_path_reduced=None, out_path_emg=N
     data = get_data_from_pkl_pd("action-net/pickles/S04_1")
     uid_offset = 0
     first_frame = 0
+    dataset_spect = []
 
     for index, row in data.iterrows():
         if index == 0:
@@ -470,7 +471,7 @@ def rgb_action_net_creation(out_path=None, out_path_reduced=None, out_path_emg=N
         elif len(readings) < 750:
             new_rows = np.zeros((750 - len(readings), 8))
             readings = np.concatenate((readings, new_rows), axis=0)
-        dataset_emg[i]["right_readings"] = readings
+        dataset_emg[i]["right_readings"] = preprocess(readings)
 
     for i in range(len(dataset_emg)):
         readings = dataset_emg[i]["left_readings"]
@@ -479,12 +480,23 @@ def rgb_action_net_creation(out_path=None, out_path_reduced=None, out_path_emg=N
         elif len(readings) < 750:
             new_rows = np.zeros((750 - len(readings), 8))
             readings = np.concatenate((readings, new_rows), axis=0)
-        dataset_emg[i]["left_readings"] = readings
+        dataset_emg[i]["left_readings"] = preprocess(readings)
+
+    for k in range(len(dataset_emg)):
+        print(f"Spectogramm: {k}/{len(dataset_emg)}")
+        dataset_spect.append(
+            {
+                "id": dataset_emg[k]["id"],
+                "right_readings": compute_spectrogram(dataset_emg[k]["right_readings"]),
+                "left_readings": compute_spectrogram(dataset_emg[k]["left_readings"]),
+                "label": dataset_emg[k]["label"],
+            }
+        )
 
     # Convert list of dictionaries to DataFrame
     df_rgb = pd.DataFrame(dataset)
     df_reduced = pd.DataFrame(dataset_reduced)
-    df_emg = pd.DataFrame(dataset_emg)
+    df_emg = pd.DataFrame(dataset_spect)
 
     # Split dataset into train and validation
     train_data, val_data = train_test_split(df_rgb, test_size=0.2, random_state=42)
