@@ -6,6 +6,9 @@ import pandas as pd
 import numpy as np
 from utils.extract_pkl import *
 from sklearn.model_selection import train_test_split
+from scipy.signal import butter, filtfilt
+import torch
+from utils.spec_emg import compute_spectrogram
 
 
 label_dict = {
@@ -247,6 +250,115 @@ def emg_dataset(path, out_path):
         pickle.dump(data, file)
 
     print("EMG Action Net Creation: done")
+    return data
+
+
+def preprocess(readings):
+    #* apply preprocessing to the EMG data
+
+    #* Rectification
+    # abs value
+    readings_rectified = np.abs(readings)
+    #* low-pass Filter
+    # Frequenza di campionamento (Hz)
+    fs = 160  # Frequenza dei sampling data da loro
+    f_cutoff = 5  # Frequenza di taglio
+
+    # Ordine del filtro
+    order = 4 
+    # Calcolo dei coefficienti del filtro
+    b, a = butter(order, f_cutoff / (fs / 2), btype='low')
+    # Concateno tutti i vettori in un'unica matrice
+    readings_filtered = np.zeros_like(readings_rectified, dtype=float)
+    for i in range(8):  # 8 colonne
+        readings_filtered[:, i] = filtfilt(b, a, readings_rectified[:, i])
+
+    #print(readings_rectified[:6], readings_rectified.shape)
+    #print(readings_filtered[:6], readings_filtered.shape)
+    # exit()
+
+    # convert to tensor
+    readings_filtered = torch.tensor(readings_filtered, dtype=torch.float32)
+    
+    min_val, _ = torch.min(readings_filtered, dim=1, keepdim=True)
+    max_val, _ = torch.max(readings_filtered, dim=1, keepdim=True)
+
+    g = max_val - min_val + 0.0001
+
+    # # Normalize the data to the range -1 to 1
+    normalized_data = 2 * (readings_filtered - min_val) / g - 1
+
+    #print(normalized_data[:6], normalized_data.shape)
+
+
+    return normalized_data
+
+
+def emg_dataset_spettrogram(path, out_path):
+    actionNet_train = get_data_from_pkl_pd(path)
+    data = {"features": []}
+    dataset_emg = []
+    uid_offset = 0
+    first_frame = 0
+
+    for i in range(len(actionNet_train)):
+        index = actionNet_train.index[i]
+        file = actionNet_train.iloc[i].file
+        label = actionNet_train.iloc[i].description
+
+        file_pkl = get_data_from_pkl_pd("action-net/pickles/" + file.strip(".pkl"))
+        row = file_pkl.loc[index]
+        first_frame = float(file_pkl.loc[0]["start"])
+        record = generate_record(uid_offset, row, first_frame, 1, True)
+
+        records = dataset_augmentation(record, uid_offset)
+        uid_offset += len(records)
+        for r in records:
+            dataset_emg.append(
+                {
+                    "id": r["uid"],
+                    "right_readings": r["myo_right_readings"],
+                    "left_readings": r["myo_left_readings"],
+                    "label": label_dict[label],
+                }
+            )
+
+        for k in range(len(dataset_emg)):
+            readings = dataset_emg[k]["right_readings"]
+            if len(readings) > 750:
+                readings = sampling(readings)
+            elif len(readings) < 750:
+                new_rows = np.zeros((750 - len(readings), 8))
+                readings = np.concatenate((readings, new_rows), axis=0)
+            dataset_emg[k]["right_readings"] = preprocess(readings)
+
+        for k in range(len(dataset_emg)):
+            readings = dataset_emg[k]["left_readings"]
+            if len(readings) > 750:
+                readings = sampling(readings)
+            elif len(readings) < 750:
+                new_rows = np.zeros((750 - len(readings), 8))
+                readings = np.concatenate((readings, new_rows), axis=0)
+            dataset_emg[k]["left_readings"] = preprocess(readings)
+
+        dataset_spect = []
+        for k in range(len(dataset_emg)):
+            dataset_spect.append(
+                {
+                    "id": dataset_emg[k]["id"],
+                    "right_readings": compute_spectrogram(dataset_emg[k]["right_readings"]),
+                    "left_readings": compute_spectrogram(dataset_emg[k]["left_readings"]),
+                    "label": dataset_emg[k]["label"],
+                }
+            )
+
+        print(f"Spectogramm: {i}/{len(actionNet_train)}")
+        
+    data["features"] = dataset_spect
+    with open(out_path, "wb") as file:
+        pickle.dump(data, file)
+
+    print("EMG_comv Action Net Creation: done")
     return data
 
 

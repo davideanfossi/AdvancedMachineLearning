@@ -67,11 +67,13 @@ if __name__ == "__main__":
 
     # RGB Action Net Creation
     #df, _, df_emg = rgb_action_net_creation("train_val_action_net/D4", "train_val/D4", "train_val_action_net/D4_emg")
-    df = get_data_from_pkl_pd("train_val_action_net/D4_train")
-    df_emg = get_data_from_pkl_pd("train_val_action_net/D4_emg_train")
-    print(df.head(), "\n")
-    print(df_emg.head(), "\n")
-    print(len(df_emg.right_readings[0]), "\n")
+    
+   #df = get_data_from_pkl_pd("train_val_action_net/D4_train")
+   #df_emg = get_data_from_pkl_pd("train_val_action_net/D4_emg_train")
+   #print(df.head(), "\n")
+   #print(df_emg.head(), "\n")
+   #print(len(df_emg.right_readings[0]), "\n")
+    
     #data = get_data_from_pkl_pd("train_val/D3_train")
     #print(set(data["description"]))
     #print(len(set(data["verb"])))
@@ -117,14 +119,26 @@ if __name__ == "__main__":
     #print("COUNT MAX right: ", count_max_r)
     #print("COUNT MAX left: ", count_max_l)
 
-    emg_dataset("action-net/ActionNet_train", "train_val/big_file_train.pkl")
-    emg_dataset("action-net/ActionNet_test", "train_val/big_file_test.pkl")
-    data = get_data_from_pkl_pd("train_val/big_file_train")
+    # emg_dataset("action-net/ActionNet_train", "train_val/big_file_train.pkl")
+    # emg_dataset("action-net/ActionNet_test", "train_val/big_file_test.pkl")
+    # data = get_data_from_pkl_pd("train_val/big_file_train")
+    # data = pd.DataFrame(data["features"])
+    # print(data.head(), "\n")
+    # data = get_data_from_pkl_pd("train_val/big_file_test")
+    # data = pd.DataFrame(data["features"])
+    # print(data.head())
+
+
+    # BIG FILE WITH PREPROCESSED DATA AND SPRECTROGRAM
+    emg_dataset_spettrogram("action-net/ActionNet_train", "train_val/big_file_train_spe.pkl")
+    emg_dataset_spettrogram("action-net/ActionNet_test", "train_val/big_file_test_spe.pkl")
+    data = get_data_from_pkl_pd("train_val/big_file_train_spe")
     data = pd.DataFrame(data["features"])
-    #print(data.head(), "\n")
-    data = get_data_from_pkl_pd("train_val/big_file_test")
+    print(data.head(), "\n")
+    data = get_data_from_pkl_pd("train_val/big_file_test_spe")
     data = pd.DataFrame(data["features"])
-    #print(data.head())
+    print(data.head())
+
 
     # HDF5 handler (Step #3)
     # hdf5_handler()

@@ -161,10 +161,10 @@ class ActionNetwork_Conv(nn.Module):
         # x.shape = (32, 750, 16)
 
         #* start conv and spectrogram
-        a = []
-        for i in range(x.size(0)):
-             a.append(compute_spectrogram(x[i]))
-        x = torch.stack(a).to("cuda") # (32, 16, 17, 188)
+        # a = []
+        # for i in range(x.size(0)):
+        #      a.append(compute_spectrogram(x[i]))
+        # x = torch.stack(a).to("cuda") # (32, 16, 17, 188)
 
         x = self.conv_layer(x)
         x = x.reshape(x.size(0), x.size(1)*x.size(2)*x.size(3))  # (32, 100, 16) -> (32, 1600)
