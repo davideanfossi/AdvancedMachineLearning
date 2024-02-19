@@ -56,15 +56,18 @@ def main():
         logger.info('{} Net\tModality: {}'.format(args.models[m].model, m)) #* args.models[m].model è uguale a Classifier
         # notice that here, the first parameter passed is the input dimension
         # In our case it represents the feature dimensionality which is equivalent to 1024 for I3D
-        match args.models[m].model:
-            case "TransformerClassifier":
-                models[m] = getattr(model_list, args.models[m].model)(num_classes)
-            case "LSTM":
-                models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size) #ToDO: must be edited
-            case "MLP":
-                models[m] = getattr(model_list, args.models[m].model)() #ToDO: must be edited
-            case "ActionNetwork":
-                models[m] = getattr(model_list, args.models[m].model)(num_classes, 16, args.batch_size) #ToDO: must be edited
+        if args.models[m].model == "TransformerClassifier":
+            models[m] = getattr(model_list, args.models[m].model)(num_classes)
+        elif args.models[m].model == "LSTM":
+            models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size)
+        elif args.models[m].model == "MLP":
+            models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size)
+        elif args.models[m].model == "ActionNetwork_fusion":
+            models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size) #ToDO: must be edited
+        elif args.models[m].model == "ActionNetwork":
+            models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size) #ToDO: must be edited
+        elif args.models[m].model == "ActionNetwork_Conv":
+            models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size) #ToDO: must be edited
 
     # the models are wrapped into the ActionRecognition task which manages all the training steps
     action_classifier = tasks.ActionRecognition("action-classifier", models, args.batch_size,      #* Passa alcuni parametri del default.yaml
@@ -90,7 +93,7 @@ def main():
         val_loader = torch.utils.data.DataLoader(
                 ActionEMGDataset(args.dataset.shift.split("-")[0], 'val', args.dataset),
                 batch_size=args.batch_size, shuffle=False, num_workers=args.dataset.workers,
-                pin_memory=True, drop_last=True
+                pin_memory=True, drop_last=False
             )
         
         train(action_classifier, train_loader, val_loader, device, num_classes)
@@ -125,7 +128,9 @@ def train(action_classifier, train_loader, val_loader, device, num_classes):
 
     # the batch size should be total_batch but batch accumulation is done with batch size = batch_size.
     # real_iter is the number of iterations if the batch size was really total_batch
-    for i in range(iteration, training_iterations):
+    
+    for i in range(int(iteration), training_iterations):
+    #for i in range(0, training_iterations):
         # iteration w.r.t. the paper (w.r.t the bs to simulate).... i is the iteration with the actual bs( < tot_bs)
         real_iter = (i + 1) / (args.total_batch // args.batch_size)
         if real_iter == args.train.lr_steps:
@@ -193,7 +198,8 @@ def train(action_classifier, train_loader, val_loader, device, num_classes):
                 action_classifier.best_iter = real_iter
                 action_classifier.best_iter_score = val_metrics['top1']
 
-            action_classifier.save_model(real_iter, val_metrics['top1'], prefix=None)
+            if (i + 1) == training_iterations:
+                action_classifier.save_model(real_iter, val_metrics['top1'], prefix=None)
             action_classifier.train(True)
 
 

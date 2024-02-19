@@ -29,7 +29,7 @@ def save_into_big_pkl(action_net_path, big_file_path, label_dict):
         # get readings and timestamps from the file
         Spkl = get_data_from_pkl_pd("readings/" + file.strip(".pkl"))
         right_readings = Spkl.myo_right_readings[index]
-        left_readings = Spkl.myo_left_readings[index]  
+        left_readings = Spkl.myo_left_readings[index]
   
         # separate the readings into bloks of 100 and truncate longer readings 
         minimum = min(len(right_readings), len(left_readings))
@@ -65,28 +65,28 @@ def save_into_big_pkl(action_net_path, big_file_path, label_dict):
 
 def main():
     label_dict = {
-        'Clean a pan with a sponge': 0,
-        'Clean a pan with a towel': 1,
+        "Spread jelly on a bread slice": 0,
+        "Slice a potato": 1,
         'Get items from refrigerator/cabinets/drawers': 2,
-        'Get/replace items from refrigerator/cabinets/drawers': 2,
-        'Clean a plate with a sponge': 3,
-        'Clean a plate with a towel': 4,
-        'Clear cutting board': 5,
-        'Get items from cabinets: 3 each large/small plates, bowls, mugs, glasses, sets of utensils': 6,
-        'Load dishwasher: 3 each large/small plates, bowls, mugs, glasses, sets of utensils': 7,
-        'Open a jar of almond butter': 8,
-        'Open/close a jar of almond butter': 8,
-        'Peel a cucumber': 9,
-        'Peel a potato': 10,
-        'Pour water from a pitcher into a glass': 11,
-        'Set table: 3 each large/small plates, bowls, mugs, glasses, sets of utensils': 12,
-        'Slice a cucumber': 13,
-        'Slice a potato': 14,
-        'Slice bread': 15,
-        'Spread almond butter on a bread slice': 16,
-        'Spread jelly on a bread slice': 17,
-        'Stack on table: 3 each large/small plates, bowls': 18,
-        'Unload dishwasher: 3 each large/small plates, bowls, mugs, glasses, sets of utensils': 19
+        "Get/replace items from refrigerator/cabinets/drawers": 2,
+        "Clean a plate with a towel": 3,
+        "Pour water from a pitcher into a glass": 4,
+        "Stack on table: 3 each large/small plates, bowls": 5,
+        "Spread almond butter on a bread slice": 6,
+        "Slice a cucumber": 7,
+        "Clean a pan with a sponge": 8,
+        "Load dishwasher: 3 each large/small plates, bowls, mugs, glasses, sets of utensils": 9,
+        'Open a jar of almond butter': 10,
+        "Open/close a jar of almond butter": 10,
+        "Slice bread": 11,
+        "Peel a cucumber": 12,
+        "Clean a plate with a sponge": 13,
+        "Clear cutting board": 14,
+        "Set table: 3 each large/small plates, bowls, mugs, glasses, sets of utensils": 15,
+        "Clean a pan with a towel": 16,
+        "Peel a potato": 17,
+        "Unload dishwasher: 3 each large/small plates, bowls, mugs, glasses, sets of utensils": 18,
+        "Get items from cabinets: 3 each large/small plates, bowls, mugs, glasses, sets of utensils": 19
     }
     
     save_into_big_pkl("action-net/ActionNet_train", "train_val/big_file_train.pkl",label_dict)

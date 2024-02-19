@@ -2,20 +2,7 @@ import torch
 from torch import nn
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
 import torch.nn.functional as F
-
-class MLP(nn.Module):
-    def __init__(self, num_classes, batch_size): # 1024, 8
-        super(MLP, self).__init__()
-        self.input_size = 1024
-        self.mlp = nn.Sequential(
-            nn.Linear(self.input_size, 512), 
-            nn.Linear(512, num_classes)
-        )
-
-    def forward(self, x):
-        logits = self.mlp(x)
-        return logits, {"features": {}}
-
+from utils.spec_emg import compute_spectrogram
 
 class MLP(nn.Module):
     def __init__(self, num_classes, batch_size): # 1024, 8
@@ -103,10 +90,111 @@ class TransformerClassifier(nn.Module):
         return logits, {"features": feat}
     
 class ActionNetwork(nn.Module):
-    def __init__(self, num_classes, input_size, batch_size): #* aggiusta i parametri, ad es. passa la batch come arg
+    def __init__(self, num_classes, batch_size): #* aggiusta i parametri, ad es. passa la batch come arg
         super(ActionNetwork, self).__init__()
-        self.input_size = 1600 # input_size
-        self.lstm_hidden_size = 800
+        self.input_size = 12000 
+        self.lstm_hidden_size = 4096 
+        self.lstm2_hidden_size = 1024
+        self.num_layers = 1
+        self.batch_size = batch_size
+        self.lstm = nn.LSTM(self.input_size, self.lstm_hidden_size, self.num_layers, 
+                            bias=True, batch_first=True, dropout=0, bidirectional=False, 
+                            proj_size=0, device=None, dtype=None)
+        self.lstm2 = nn.LSTM(self.lstm_hidden_size, self.lstm2_hidden_size, self.num_layers, 
+                            bias=True, batch_first=True, dropout=0, bidirectional=False, 
+                            proj_size=0, device=None, dtype=None)
+        
+        self.dropout = nn.Dropout(p=0.2, inplace=False)
+        self.fc1 = nn.Linear(1024, 512)
+        self.fc2 = nn.Linear(512, num_classes)
+
+    def forward(self, x):
+        # x.shape = (32, 750, 16)
+        
+        x = x.reshape(x.size(0), 12000) # (32, 1, 1600)
+        x = x.unsqueeze(1) # (32, 1, 1600)
+
+        h0 = torch.zeros(self.num_layers, x.size(0), self.lstm_hidden_size).to(x.device)
+        c0 = torch.zeros(self.num_layers, x.size(0), self.lstm_hidden_size).to(x.device)
+
+        out, _ = self.lstm(x, (h0, c0)) # (32, 1, 800)
+
+        h02 = torch.zeros(self.num_layers, out.size(0), self.lstm2_hidden_size).to(x.device)
+        c02 = torch.zeros(self.num_layers, out.size(0), self.lstm2_hidden_size).to(x.device)
+
+        out2, _ = self.lstm2(out, (h02, c02)) # (32, 1, 50)
+        
+        out3 = self.dropout(out2)  
+
+        feat = out3.view(-1, self.lstm2_hidden_size) # (32, 50)
+        logits = self.fc2(torch.relu(self.fc1(feat)))  # (32, 20)
+        #logits = self.fc1(feat)  # (32, 20)
+
+        #* SoftMax
+        predicted_activity = torch.argmax(F.softmax(logits, dim=1), dim=1)
+        #print(out.shape, out2.shape, out3.shape, logits.shape)
+
+        return logits, {"features": feat}
+    
+    
+class ActionNetwork_Conv(nn.Module):
+    def __init__(self, num_classes, batch_size): #* aggiusta i parametri, ad es. passa la batch come arg
+        super(ActionNetwork_Conv, self).__init__()
+        self.input_size = 2960 
+        self.lstm_hidden_size = 2048
+        self.lstm2_hidden_size = 1024
+        self.num_layers = 1
+        self.batch_size = batch_size
+        self.conv_layer = nn.Conv2d(in_channels=16, out_channels=16, kernel_size=(17, 4))
+        self.lstm = nn.LSTM(self.input_size, self.lstm_hidden_size, self.num_layers, 
+                            bias=True, batch_first=True, dropout=0, bidirectional=False, 
+                            proj_size=0, device=None, dtype=None)
+        self.lstm2 = nn.LSTM(self.lstm_hidden_size, self.lstm2_hidden_size, self.num_layers, 
+                            bias=True, batch_first=True, dropout=0, bidirectional=False, 
+                            proj_size=0, device=None, dtype=None)
+        
+        self.dropout = nn.Dropout(p=0.2, inplace=False)
+        self.fc1 = nn.Linear(1024, 512)
+        self.fc2 = nn.Linear(512, num_classes)
+
+
+    def forward(self, x):
+        # x.shape = (32, 750, 16)
+
+        x = self.conv_layer(x)
+        x = x.reshape(x.size(0), x.size(1)*x.size(2)*x.size(3))  # (32, 100, 16) -> (32, 1600)
+        #* end conv
+
+        x = x.unsqueeze(1) # (32, 1, 1600)
+
+        h0 = torch.zeros(self.num_layers, x.size(0), self.lstm_hidden_size).to(x.device)
+        c0 = torch.zeros(self.num_layers, x.size(0), self.lstm_hidden_size).to(x.device)
+
+        out, _ = self.lstm(x, (h0, c0)) # (32, 1, 800)
+
+        h02 = torch.zeros(self.num_layers, out.size(0), self.lstm2_hidden_size).to(x.device)
+        c02 = torch.zeros(self.num_layers, out.size(0), self.lstm2_hidden_size).to(x.device)
+
+        out2, _ = self.lstm2(out, (h02, c02)) # (32, 1, 50)
+        
+        out3 = self.dropout(out2)  
+
+        feat = out3.view(-1, self.lstm2_hidden_size) # (32, 50)
+        logits = self.fc2(torch.relu(self.fc1(feat)))  # (32, 20)
+        #logits = self.fc1(feat)  # (32, 20)
+
+        #* SoftMax
+        predicted_activity = torch.argmax(F.softmax(logits, dim=1), dim=1)
+        #print(out.shape, out2.shape, out3.shape, logits.shape)
+
+        return logits, {"features": feat}
+    
+
+class ActionNetwork_fusion(nn.Module):
+    def __init__(self, num_classes, batch_size): #* aggiusta i parametri, ad es. passa la batch come arg
+        super(ActionNetwork_fusion, self).__init__()
+        self.input_size = 7200 # input_size
+        self.lstm_hidden_size = 3000
         self.lstm2_hidden_size = 50
         self.num_layers = 1
         self.batch_size = batch_size
@@ -147,8 +235,8 @@ class ActionNetwork(nn.Module):
         return logits, {"features": out2}
 
     def forward(self, x):
-        # x.shape = (32, 100, 16)
-        x = x.reshape(32, 1600)  # (32, 100, 16) -> (32, 1600)
+        # x.shape = (32, 450, 16)
+        x = x.reshape(x.size(0), 7200)  # (32, 100, 16) -> (32, 1600)
         x = x.unsqueeze(1) # (32, 1, 1600)
 
         h0 = torch.zeros(self.num_layers, x.size(0), self.lstm_hidden_size).to(x.device)

@@ -62,7 +62,7 @@ def main():
             case "LSTM":
                 models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size)
             case "MLP":
-                models[m] = getattr(model_list, args.models[m].model)()
+                models[m] = getattr(model_list, args.models[m].model)(num_classes, args.batch_size)
 
     # the models are wrapped into the ActionRecognition task which manages all the training steps
     action_classifier = tasks.ActionRecognition("action-classifier", models, args.batch_size,      #* Passa alcuni parametri del default.yaml

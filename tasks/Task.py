@@ -177,16 +177,19 @@ class Task(torch.nn.Module, metaclass=ABCMeta):
 
         for m in self.modalities:
             # Get the correct model (modality, name, idx)
-            model = list(
-                filter(
-                    lambda x: m == x.name.split(".")[0].split("_")[-2]
-                    and self.name == x.name.split(".")[0].split("_")[-3],
-                    saved_models,
-                )
-            )[0].name
+            try:
+                model = list(
+                    filter(
+                        lambda x: m == x.name.split(".")[0].split("_")[-2]
+                        and self.name == x.name.split(".")[0].split("_")[-3],
+                        saved_models,
+                    )
+                )[0].name
 
-            model_path = os.path.join(last_models_dir, model)
-            self.__restore_checkpoint(m, model_path)
+                model_path = os.path.join(last_models_dir, model)
+                self.__restore_checkpoint(m, model_path)
+            except:
+                logger.error(f"Model for {self.name} and modality {m} not found in {path}")
 
     def save_model(self, current_iter: int, last_iter_acc: float, prefix: Optional[str] = None):
         """Save the model.
